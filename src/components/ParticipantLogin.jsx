@@ -19,7 +19,7 @@ const ParticipantLogin = ({
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         // Keep names and roll numbers uppercase for consistency
-        const processedValue = (name === 'name' || name === 'rollNo' || name === 'teammateRollNo' || name === 'accessCode')
+        const processedValue = (name === 'name' || name === 'rollNo' || name === 'teammateRollNo')
             ? value.toUpperCase()
             : value;
 
