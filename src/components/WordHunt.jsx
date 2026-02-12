@@ -161,15 +161,16 @@ const WordHunt = ({ onBack, onFinish }) => {
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
 
-        // deselect if clicking same cell
+        // Toggle logic: If same cell clicked while in "Click-Move" mode, deselect
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
+            setDirection(null);
             return;
         }
 
-        // second click to confirm
-        if (startCell && !isDragging) {
+        // Second-click logic: If we have a start cell and this is a different cell
+        if (startCell && !isDragging && (startCell.r !== r || startCell.c !== c)) {
             if (selectedCells.length >= 2) {
                 checkWord(selectedCells);
                 return;
@@ -179,6 +180,7 @@ const WordHunt = ({ onBack, onFinish }) => {
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
+        setDirection(null);
     };
 
     const handleMouseEnter = (r, c) => {
@@ -204,9 +206,26 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
+
+        // Match the click-move logic for touch
+        if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
+            setStartCell(null);
+            setSelectedCells([]);
+            setDirection(null);
+            return;
+        }
+
+        if (startCell && !isDragging) {
+            if (selectedCells.length >= 2) {
+                checkWord(selectedCells);
+                return;
+            }
+        }
+
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
+        setDirection(null);
     };
 
     const handleTouchMove = (e) => {
@@ -228,10 +247,11 @@ const WordHunt = ({ onBack, onFinish }) => {
                     checkWord(selectedCells);
                 }
                 setIsDragging(false);
+                // We DON'T clear startCell here to allow Click-Move mode
             }
         };
         window.addEventListener('mouseup', handleEnd);
-        window.addEventListener('touchend', handleEnd);
+        window.addEventListener('touchend', handleEnd, { passive: false });
         return () => {
             window.removeEventListener('mouseup', handleEnd);
             window.removeEventListener('touchend', handleEnd);
