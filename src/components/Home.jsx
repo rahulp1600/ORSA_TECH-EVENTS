@@ -60,6 +60,22 @@ const Home = ({ onStart }) => {
                 </motion.button>
             </motion.div>
 
+            {/* Admin Access Logo - Top Right Corner */}
+            <motion.div
+                whileHover={{ scale: 1.1, rotate: 10 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-8 right-8 z-50 cursor-pointer group"
+                onClick={() => onStart('admin-login')}
+            >
+                <div className="w-12 h-12 rounded-full border border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-300">
+                    <img
+                        src="/vite.svg"
+                        alt="ORSA Admin"
+                        className="w-6 h-6 opacity-30 group-hover:opacity-100 transition-opacity duration-300"
+                    />
+                </div>
+            </motion.div>
+
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/10 rounded-full blur-[120px]" />

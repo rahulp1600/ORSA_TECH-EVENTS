@@ -88,7 +88,7 @@ export const TECH_PICTO_SET_1 = [
         id: 15,
         title: "Challenge 15",
         images: ["/photos/techpicto/road", "/photos/techpicto/map.jpg"],
-        target: "ROADMAP"
+        target: "ROADMAP" 
     }
 ];
 

@@ -24,8 +24,12 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleStart = () => {
-    setGameState('loading');
+  const handleStart = (target) => {
+    if (target === 'admin-login') {
+      setGameState('admin-login');
+    } else {
+      setGameState('loading');
+    }
   };
 
   const handleLoadingComplete = () => {
@@ -61,6 +65,14 @@ function App() {
       {gameState === 'code-debugging' && <CodeDebugging onBack={handleBack} onFinish={handleFinishEvent} />}
       {gameState === 'code-rush' && <CodeRush onBack={handleBack} onFinish={handleFinishEvent} />}
       {gameState === 'tech-picto' && <TechPicto onBack={handleBack} onFinish={handleFinishEvent} />}
+      {gameState === 'admin-login' && (
+        <React.Suspense fallback={null}>
+          {React.createElement(React.lazy(() => import('./components/AdminLogin')), {
+            onLogin: () => setGameState('admin'),
+            onCancel: () => setGameState('home')
+          })}
+        </React.Suspense>
+      )}
       {gameState === 'admin' && <AdminDashboard onBack={() => setGameState('home')} />}
     </div>
   );
