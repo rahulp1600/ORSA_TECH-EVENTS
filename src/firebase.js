@@ -53,11 +53,9 @@ export const saveGameResult = async (eventName, resultData) => {
 export const getLeaderboardData = async (eventName) => {
     try {
         const collectionName = `${eventName}_results`;
-        const q = query(collection(db, collectionName), orderBy("score", "desc"), orderBy("timeTaken", "asc")); // Primary sort by Score (High to Low), Secondary by Time (Low to High)
-
-        // Note: For descending sort on score and ascending on time, you might need a composite index in Firestore.
-        // If query fails, check console for index creation link.
-        // Alternatively, sort client-side.
+        // Fetch all documents without server-side sorting to avoid index errors
+        // The AdminDashboard already handles client-side sorting
+        const q = query(collection(db, collectionName));
 
         const querySnapshot = await getDocs(q);
         const results = [];
