@@ -96,24 +96,26 @@ const WordHunt = ({ onBack, onFinish }) => {
             return;
         }
 
-        const selStr = selection.map(s => s.char).join('').toUpperCase().trim();
+        // Clean strings: Remove non-alphabetic chars and whitespace
+        const clean = (s) => s.toUpperCase().replace(/[^A-Z]/g, '').trim();
+        const selStr = clean(selection.map(s => s.char).join(''));
         const revStr = [...selStr].reverse().join('');
 
         let solvedIdx = -1;
 
-        // Priority 1: Check Current Clue (for direct mapping)
+        // Priority 1: Check Current Clue
         if (words[currentIdx]) {
-            const target = words[currentIdx][0].toUpperCase().trim();
+            const target = clean(words[currentIdx][0]);
             if (selStr === target || revStr === target) {
                 solvedIdx = currentIdx;
             }
         }
 
-        // Priority 2: Full Bank Search (prevents "stuck" logic)
+        // Priority 2: Full Bank Fallback
         if (solvedIdx === -1) {
             for (let i = 0; i < words.length; i++) {
                 if (foundIndices.has(i)) continue;
-                const target = words[i][0].toUpperCase().trim();
+                const target = clean(words[i][0]);
                 if (selStr === target || revStr === target) {
                     solvedIdx = i;
                     break;
@@ -124,40 +126,37 @@ const WordHunt = ({ onBack, onFinish }) => {
         if (solvedIdx !== -1) {
             // WORD FOUND - Commit State
             setFoundIndices(prev => {
-                const updated = new Set(prev);
-                updated.add(solvedIdx);
+                const nextFound = new Set(prev);
+                nextFound.add(solvedIdx);
 
-                // Update Scoring and Completed Cells
+                // Mark cells as green
                 const cellKeys = selection.map(s => `${s.r}-${s.c}`);
                 setCompletedCells(c => [...new Set([...c, ...cellKeys])]);
-                setScore(updated.size);
+                setScore(nextFound.size);
 
-                // Check Game Over
-                if (updated.size === words.length) {
+                if (nextFound.size === words.length) {
                     const finishTime = Date.now();
                     setEndTime(finishTime);
                     setPhase('result');
                     const timeTaken = Math.floor((finishTime - startTime) / 1000);
-                    const finalCgpa = ((updated.size / words.length) * 10).toFixed(2);
-
                     saveGameResult('wordhunt', {
                         ...formData,
-                        score: updated.size,
+                        score: nextFound.size,
                         totalWords: words.length,
                         timeTaken,
-                        cgpa: finalCgpa
+                        cgpa: ((nextFound.size / words.length) * 10).toFixed(2)
                     });
                 } else {
-                    // Switch to the NEXT available clue
-                    let next = 0;
-                    while (next < words.length && updated.has(next)) next++;
-                    setCurrentIdx(next < words.length ? next : 0);
+                    // Advance Clue
+                    let n = 0;
+                    while (n < words.length && nextFound.has(n)) n++;
+                    setCurrentIdx(n < words.length ? n : 0);
                 }
-                return updated;
+                return nextFound;
             });
         }
 
-        // Always reset selection interaction
+        // Cleanup selection regardless of result
         setStartCell(null);
         setSelectedCells([]);
         setDirection(null);
@@ -167,6 +166,7 @@ const WordHunt = ({ onBack, onFinish }) => {
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
 
+        // If clicking the same cell that started the selection, toggle it off
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
@@ -174,13 +174,7 @@ const WordHunt = ({ onBack, onFinish }) => {
             return;
         }
 
-        if (startCell && !isDragging && (startCell.r !== r || startCell.c !== c)) {
-            if (selectedCells.length >= 2) {
-                checkWord(selectedCells);
-                return;
-            }
-        }
-
+        // Start fresh selection
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
@@ -189,54 +183,45 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     const handleMouseEnter = (r, c) => {
         if (!startCell) return;
+
         const dr = Math.sign(r - startCell.r);
         const dc = Math.sign(c - startCell.c);
         const isStraight = r === startCell.r || c === startCell.c || Math.abs(r - startCell.r) === Math.abs(c - startCell.c);
 
         if (isStraight) {
-            const newSelection = [];
+            const newSel = [];
             const steps = Math.max(Math.abs(r - startCell.r), Math.abs(c - startCell.c));
             for (let i = 0; i <= steps; i++) {
-                const currR = startCell.r + dr * i;
-                const currC = startCell.c + dc * i;
-                if (currR >= 0 && currR < grid.length && currC >= 0 && currC < grid[0].length) {
-                    newSelection.push({ r: currR, c: currC, char: grid[currR][currC] });
+                const cr = startCell.r + dr * i;
+                const cc = startCell.c + dc * i;
+                if (cr >= 0 && cr < grid.length && cc >= 0 && cc < grid[0].length) {
+                    newSel.push({ r: cr, c: cc, char: grid[cr][cc] });
                 }
             }
-            setSelectedCells(newSelection);
+            setSelectedCells(newSel);
             setDirection({ dr, dc });
         }
     };
 
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
-
+        // Same logic as mouse down for unified behavior
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
-            setDirection(null);
             return;
         }
-
-        if (startCell && !isDragging) {
-            if (selectedCells.length >= 2) {
-                checkWord(selectedCells);
-                return;
-            }
-        }
-
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
-        setDirection(null);
     };
 
     const handleTouchMove = (e) => {
         if (!isDragging || !startCell) return;
         if (e.cancelable) e.preventDefault();
         const touch = e.touches[0];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        const cell = element?.closest('[data-pos]');
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = el?.closest('[data-pos]');
         if (cell && cell.dataset.pos) {
             const [tr, tc] = cell.dataset.pos.split('-').map(Number);
             handleMouseEnter(tr, tc);
@@ -245,11 +230,14 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     useEffect(() => {
         const handleEnd = () => {
-            if (isDragging) {
-                if (selectedCells.length >= 2) {
-                    checkWord(selectedCells);
-                }
-                setIsDragging(false);
+            // If we have a selection longer than 1, attempt to verify it immediately on release
+            if (isDragging && selectedCells.length >= 2) {
+                checkWord(selectedCells);
+            }
+            setIsDragging(false);
+            // We DON'T clear startCell here IF length was 1, to allow 'Click-then-Move-then-Click' mode
+            if (!isDragging && selectedCells.length >= 2) {
+                checkWord(selectedCells);
             }
         };
         window.addEventListener('mouseup', handleEnd);
