@@ -2,8 +2,6 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, KeyRound, ArrowLeft, ChevronRight } from 'lucide-react';
 
-const ACCESS_CODE = "ORSA2026";
-
 const ParticipantLogin = ({
     eventTitle,
     themeColor,
@@ -15,7 +13,8 @@ const ParticipantLogin = ({
     setMsg,
     showBranch = true,
     showTeamOption = false,
-    rules = []
+    rules = [],
+    accessCode // New prop for dynamic validation
 }) => {
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -50,7 +49,8 @@ const ParticipantLogin = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (formData.accessCode !== ACCESS_CODE) {
+        // Use the passed accessCode prop for validation
+        if (formData.accessCode !== accessCode) {
             setMsg('INVALID ACCESS CODE');
             setTimeout(() => setMsg(''), 2000);
             return;

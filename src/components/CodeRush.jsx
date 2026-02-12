@@ -169,6 +169,7 @@ const CodeRush = ({ onBack, onFinish }) => {
                             setFormData={setFormData}
                             msg={msg.text}
                             setMsg={(text) => setMsg({ text, type: 'error' })}
+                            accessCode={ACCESS_CODE}
                             showTeamOption={false}
                             rules={[
                                 '10 Progressive coding challenges',

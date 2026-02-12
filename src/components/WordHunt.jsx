@@ -325,6 +325,7 @@ const WordHunt = ({ onBack, onFinish }) => {
                             setFormData={setFormData}
                             msg={msg}
                             setMsg={setMsg}
+                            accessCode={ACCESS_CODE}
                             showTeamOption={false}
                             rules={[
                                 'Locate 15 Technical terms in the grid matrix',

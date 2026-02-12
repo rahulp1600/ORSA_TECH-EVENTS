@@ -211,6 +211,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                         setFormData={setFormData}
                         msg={msg}
                         setMsg={setMsg}
+                        accessCode={ACCESS_CODE}
                         showTeamOption={false}
                         rules={[
                             'Correct all logical and syntax errors in the provided source code.',

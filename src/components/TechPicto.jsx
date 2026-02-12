@@ -158,6 +158,7 @@ const TechPicto = ({ onBack, onFinish }) => {
                         setFormData={setFormData}
                         msg={msg}
                         setMsg={setMsg}
+                        accessCode={ACCESS_CODE}
                         showTeamOption={true}
                         rules={[
                             'Connect visual data points to decrypt technical concepts',
