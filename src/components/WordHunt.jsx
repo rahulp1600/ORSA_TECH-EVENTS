@@ -161,17 +161,12 @@ const WordHunt = ({ onBack, onFinish }) => {
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
 
-        // Click-Move-Click Logic: If we already started a selection (and aren't dragging), this click confirms it.
+        // If we already started a selection (Click-Move mode), this click submits it
         if (startCell && !isDragging && selectedCells.length > 1) {
             checkWord(selectedCells);
-            return;
+            // Don't return here; allow the current click to start a new selection
         }
 
-        // If they click a cell while another is selected (and dragging/neighbor logic), check extension
-        // ... (existing neighbor logic omitted for brevity, but we can simplify or keep)
-        // Actually, if we use the new logic, neighbor logic is less critical but let's keep it for drag nuances.
-
-        // Otherwise start a new drag/click
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
@@ -179,7 +174,6 @@ const WordHunt = ({ onBack, onFinish }) => {
     };
 
     const handleMouseEnter = (r, c) => {
-        // Allow update if dragging OR if we have a start pivot (Click-Move mode)
         if (!startCell) return;
 
         const dr = Math.sign(r - startCell.r);
@@ -201,21 +195,35 @@ const WordHunt = ({ onBack, onFinish }) => {
         }
     };
 
+    const handleTouchStart = (e, r, c) => {
+        if (phase !== 'game') return;
+        e.preventDefault(); // Prevent scrolling while playing
+        setIsDragging(true);
+        setStartCell({ r, c });
+        setSelectedCells([{ r, c, char: grid[r][c] }]);
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isDragging || !startCell) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = element?.closest('[data-pos]');
+        if (cell && cell.dataset.pos) {
+            const [tr, tc] = cell.dataset.pos.split('-').map(Number);
+            handleMouseEnter(tr, tc);
+        }
+    };
+
     useEffect(() => {
         const handleGlobalMouseUp = () => {
             if (isDragging) {
                 setIsDragging(false);
+                // If it was a meaningful drag (more than 1 cell), check it
                 if (selectedCells.length >= 2) {
                     checkWord(selectedCells);
-                    // Match found or not, we check. 
-                    // If match: checkWord clears startCell.
-                    // If no match: checkWord currently clears startCell too.
-                    // Wait, checkWord clears everything.
-                    // So Drag ends here.
                 }
-                // If length < 2 (Single Click), we DO NOT call checkWord.
-                // We leave startCell and selectedCells active.
-                // This enables Click-Move-Click mode.
+                // If length is 1, we leave startCell active for Click-Move-Click mode
             }
         };
         window.addEventListener('mouseup', handleGlobalMouseUp);
@@ -352,7 +360,6 @@ const WordHunt = ({ onBack, onFinish }) => {
                             </div>
                             <div
                                 className="grid grid-cols-12 gap-1.5 md:gap-2 mb-6 aspect-square max-w-[550px] mx-auto touch-none"
-                                onMouseLeave={() => isDragging && setIsDragging(true)} // Keep dragging even if cursor briefly leaves gap
                             >
                                 {grid.map((row, r) => row.map((char, c) => {
                                     const isSelected = selectedCells.some(s => s.r === r && s.c === c);
@@ -362,19 +369,8 @@ const WordHunt = ({ onBack, onFinish }) => {
                                             key={`${r}-${c}`}
                                             onMouseDown={() => handleMouseDown(r, c)}
                                             onMouseEnter={() => handleMouseEnter(r, c)}
-                                            onTouchMove={(e) => {
-                                                const touch = e.touches[0];
-                                                const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                                                const cell = element?.closest('[data-pos]');
-                                                if (cell && cell.dataset.pos) {
-                                                    const [tr, tc] = cell.dataset.pos.split('-').map(Number);
-                                                    handleMouseEnter(tr, tc);
-                                                }
-                                            }}
-                                            onTouchEnd={() => {
-                                                setIsDragging(false);
-                                                checkWord(selectedCells);
-                                            }}
+                                            onTouchStart={(e) => handleTouchStart(e, r, c)}
+                                            onTouchMove={handleTouchMove}
                                             data-pos={`${r}-${c}`}
                                             className={`aspect-square flex items-center justify-center text-sm md:text-lg font-black rounded cursor-pointer transition-all duration-200 select-none ${isSelected ? 'bg-yellow-400 text-black shadow-[0_0_15px_rgba(250,204,21,0.4)]' : isDone ? 'bg-green-500 text-black shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/20'}`}
                                         >
