@@ -6,7 +6,7 @@ import ParticipantLogin from './ParticipantLogin';
 import { DEBUG_CHALLENGES as CHALLENGES, normalizeCode } from '../data/codeDebuggingData';
 import { saveGameResult } from '../firebase';
 
-const ACCESS_CODE = "ORSA2026";
+const ACCESS_CODE = "debug1234";
 
 const CodeDebugging = ({ onBack, onFinish }) => {
     const [phase, setPhase] = useState('login'); // 'login', 'lang-select', 'loading', 'game', 'result'

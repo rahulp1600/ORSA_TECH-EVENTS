@@ -6,7 +6,7 @@ import ParticipantLogin from './ParticipantLogin';
 import { WORD_HUNT_BANK as BANK } from '../data/wordHuntData';
 import { saveGameResult } from '../firebase';
 
-const ACCESS_CODE = "ORSA2026";
+const ACCESS_CODE = "word2468";
 
 const WordHunt = ({ onBack, onFinish }) => {
     const [phase, setPhase] = useState('login'); // 'login', 'loading', 'game', 'result'

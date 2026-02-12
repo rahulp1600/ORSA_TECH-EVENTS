@@ -7,7 +7,7 @@ import { CODE_RUSH_SET_1, CODE_RUSH_SET_2 } from '../data/codeRushData';
 import { saveGameResult } from '../firebase';
 import { normalizeCode } from '../data/codeDebuggingData';
 
-const ACCESS_CODE = "ORSA2026";
+const ACCESS_CODE = "rushcode4321";
 
 const CodeRush = ({ onBack, onFinish }) => {
     const [phase, setPhase] = useState('login'); // 'login', 'game', 'result'

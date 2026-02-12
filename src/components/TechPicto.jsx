@@ -6,7 +6,7 @@ import ParticipantLogin from './ParticipantLogin';
 import { TECH_PICTO_SET_1, TECH_PICTO_SET_2, PHARMACY_PICTO_CHALLENGES, MBA_PICTO_CHALLENGES } from '../data/techPictoData';
 import { saveGameResult } from '../firebase';
 
-const ACCESS_CODE = "ORSA2026";
+const ACCESS_CODE = "picto2468";
 
 const TechPicto = ({ onBack, onFinish }) => {
     const [phase, setPhase] = useState('login'); // 'login', 'game', 'result'

@@ -8,7 +8,7 @@ const AdminLogin = ({ onLogin, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (rollNo === '23U61A026' && securityKey === 'orsatech26') {
+        if (rollNo === 'srichara' && securityKey === 'orsatech26') {
             onLogin();
         } else {
             setError('ACCESS DENIED: Invalid Credentials');
