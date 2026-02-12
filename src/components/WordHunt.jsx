@@ -96,72 +96,77 @@ const WordHunt = ({ onBack, onFinish }) => {
             return;
         }
 
-        const selectedStr = selection.map(s => s.char).join('').toUpperCase().trim();
-        const reversedStr = [...selectedStr].reverse().join('');
+        const selStr = selection.map(s => s.char).join('').toUpperCase().trim();
+        const revStr = [...selStr].reverse().join('');
 
         let solvedIdx = -1;
-        // Search through ALL words in the current bank
-        for (let i = 0; i < words.length; i++) {
-            if (foundIndices.has(i)) continue;
-            const target = words[i][0].toUpperCase().trim();
-            if (selectedStr === target || reversedStr === target) {
-                solvedIdx = i;
-                break;
+
+        // Priority 1: Check Current Clue (for direct mapping)
+        if (words[currentIdx]) {
+            const target = words[currentIdx][0].toUpperCase().trim();
+            if (selStr === target || revStr === target) {
+                solvedIdx = currentIdx;
+            }
+        }
+
+        // Priority 2: Full Bank Search (prevents "stuck" logic)
+        if (solvedIdx === -1) {
+            for (let i = 0; i < words.length; i++) {
+                if (foundIndices.has(i)) continue;
+                const target = words[i][0].toUpperCase().trim();
+                if (selStr === target || revStr === target) {
+                    solvedIdx = i;
+                    break;
+                }
             }
         }
 
         if (solvedIdx !== -1) {
-            // WORD FOUND!
-            const newFound = new Set(foundIndices);
-            newFound.add(solvedIdx);
-            setFoundIndices(newFound);
+            // WORD FOUND - Commit State
+            setFoundIndices(prev => {
+                const updated = new Set(prev);
+                updated.add(solvedIdx);
 
-            const cellKeys = selection.map(s => `${s.r}-${s.c}`);
-            setCompletedCells(prev => [...new Set([...prev, ...cellKeys])]);
-            setScore(newFound.size);
+                // Update Scoring and Completed Cells
+                const cellKeys = selection.map(s => `${s.r}-${s.c}`);
+                setCompletedCells(c => [...new Set([...c, ...cellKeys])]);
+                setScore(updated.size);
 
-            if (newFound.size === words.length) {
-                const finishTime = Date.now();
-                setEndTime(finishTime);
-                setPhase('result');
-                const timeTaken = Math.floor((finishTime - startTime) / 1000);
-                const cgpa = ((newFound.size / words.length) * 10).toFixed(2);
+                // Check Game Over
+                if (updated.size === words.length) {
+                    const finishTime = Date.now();
+                    setEndTime(finishTime);
+                    setPhase('result');
+                    const timeTaken = Math.floor((finishTime - startTime) / 1000);
+                    const finalCgpa = ((updated.size / words.length) * 10).toFixed(2);
 
-                saveGameResult('wordhunt', {
-                    name: formData.name,
-                    rollNo: formData.rollNo,
-                    course: formData.course,
-                    year: formData.year,
-                    branch: formData.branch,
-                    isTeam: formData.isTeam,
-                    teammateRollNo: formData.teammateRollNo,
-                    score: newFound.size,
-                    totalWords: words.length,
-                    timeTaken: timeTaken,
-                    cgpa: cgpa,
-                    accessCode: formData.accessCode
-                });
-            } else {
-                // Find next index - ensure we pick the first un-found word
-                let next = 0;
-                while (next < words.length && newFound.has(next)) {
-                    next++;
+                    saveGameResult('wordhunt', {
+                        ...formData,
+                        score: updated.size,
+                        totalWords: words.length,
+                        timeTaken,
+                        cgpa: finalCgpa
+                    });
+                } else {
+                    // Switch to the NEXT available clue
+                    let next = 0;
+                    while (next < words.length && updated.has(next)) next++;
+                    setCurrentIdx(next < words.length ? next : 0);
                 }
-                setCurrentIdx(next < words.length ? next : 0);
-            }
+                return updated;
+            });
         }
 
-        // Always clear everything after a check
+        // Always reset selection interaction
         setStartCell(null);
         setSelectedCells([]);
         setDirection(null);
         setIsDragging(false);
-    }, [words, foundIndices, startTime, formData, completedCells, saveGameResult]);
+    }, [words, currentIdx, foundIndices, startTime, formData, saveGameResult]);
 
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
 
-        // Toggle logic: If same cell clicked while in "Click-Move" mode, deselect
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
@@ -169,7 +174,6 @@ const WordHunt = ({ onBack, onFinish }) => {
             return;
         }
 
-        // Second-click logic: If we have a start cell and this is a different cell
         if (startCell && !isDragging && (startCell.r !== r || startCell.c !== c)) {
             if (selectedCells.length >= 2) {
                 checkWord(selectedCells);
@@ -207,7 +211,6 @@ const WordHunt = ({ onBack, onFinish }) => {
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
 
-        // Match the click-move logic for touch
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
@@ -247,7 +250,6 @@ const WordHunt = ({ onBack, onFinish }) => {
                     checkWord(selectedCells);
                 }
                 setIsDragging(false);
-                // We DON'T clear startCell here to allow Click-Move mode
             }
         };
         window.addEventListener('mouseup', handleEnd);
