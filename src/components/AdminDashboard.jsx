@@ -8,8 +8,8 @@ const AdminDashboard = ({ onBack }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('score'); // 'score', 'timeTaken', 'cgpa'
-    const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
+    const [sortBy, setSortBy] = useState('timeTaken'); // 'timeTaken', 'cgpa'
+    const [sortOrder, setSortOrder] = useState('asc'); // 'asc', 'desc'
 
     const tabs = [
         { id: 'coderush', label: 'Code Rush', icon: Code2, color: 'emerald' },
@@ -34,7 +34,7 @@ const AdminDashboard = ({ onBack }) => {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         } else {
             setSortBy(key);
-            setSortOrder('desc'); // Default to desc for new sort
+            setSortOrder('asc'); // Default to asc (usually time) for new sort, can adjust if needed
         }
     };
 
@@ -45,17 +45,12 @@ const AdminDashboard = ({ onBack }) => {
         const valA = a[sortBy];
         const valB = b[sortBy];
 
-        if (valA === valB) {
-            // Tie-break with Time (Lower is better)
-            return a.timeTaken - b.timeTaken;
-        }
-
         if (sortOrder === 'asc') return valA > valB ? 1 : -1;
         return valA < valB ? 1 : -1;
     });
 
     const exportToCSV = () => {
-        const headers = ['Rank', 'Name', 'Roll No', 'Course', 'Branch', 'Year', 'Score', 'Time (s)', 'CGPA', 'Teammate'];
+        const headers = ['Rank', 'Name', 'Roll No', 'Course', 'Branch', 'Year', 'Time (s)', 'CGPA', 'Teammate'];
         const rows = sortedData.map((item, idx) => [
             idx + 1,
             item.name,
@@ -63,7 +58,6 @@ const AdminDashboard = ({ onBack }) => {
             item.course,
             item.branch,
             item.year,
-            item.score,
             item.timeTaken,
             item.cgpa,
             item.teammateRollNo || '-'
@@ -108,8 +102,8 @@ const AdminDashboard = ({ onBack }) => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-3 px-6 py-4 rounded-xl border transition-all gaming-font uppercase tracking-widest text-xs font-bold ${activeTab === tab.id
-                                    ? `bg-${tab.color}-600/20 border-${tab.color}-500 text-${tab.color}-400 shadow-[0_0_20px_rgba(var(--color-${tab.color}),0.2)]`
-                                    : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'
+                                ? `bg-${tab.color}-600/20 border-${tab.color}-500 text-${tab.color}-400 shadow-[0_0_20px_rgba(var(--color-${tab.color}),0.2)]`
+                                : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'
                                 }`}
                         >
                             <tab.icon size={18} />
@@ -148,9 +142,6 @@ const AdminDashboard = ({ onBack }) => {
                                     <th className="p-4">Participant</th>
                                     <th className="p-4">Roll No</th>
                                     <th className="p-4">Branch/Year</th>
-                                    <th className="p-4 cursor-pointer hover:text-white flex items-center gap-1" onClick={() => handleSort('score')}>
-                                        Score {sortBy === 'score' && (sortOrder === 'desc' ? '▼' : '▲')}
-                                    </th>
                                     <th className="p-4 cursor-pointer hover:text-white flex items-center gap-1" onClick={() => handleSort('timeTaken')}>
                                         Time (s) {sortBy === 'timeTaken' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
@@ -173,7 +164,6 @@ const AdminDashboard = ({ onBack }) => {
                                         <td className="p-4 font-bold text-white capitalize">{row.name}</td>
                                         <td className="p-4 font-mono text-cyan-400 text-sm">{row.rollNo}</td>
                                         <td className="p-4 text-xs text-gray-400">{row.course} - {row.branch} ({row.year})</td>
-                                        <td className="p-4 font-black italic text-lg text-emerald-400">{row.score}</td>
                                         <td className="p-4 font-mono text-yellow-400">{row.timeTaken}s</td>
                                         <td className="p-4 font-bold">{row.cgpa}</td>
                                         <td className="p-4 text-xs text-gray-500">{row.teammateRollNo || '-'}</td>

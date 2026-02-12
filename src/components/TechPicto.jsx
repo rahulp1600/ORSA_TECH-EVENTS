@@ -217,7 +217,7 @@ const TechPicto = ({ onBack, onFinish }) => {
                                     <React.Fragment key={i}>
                                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: i * 0.1 }} className="relative group w-28 lg:w-40 xl:w-48 aspect-square rounded-2xl overflow-hidden border-2 border-white/5 hover:border-yellow-500/50 hover:scale-105 transition-all duration-500 shadow-2xl">
                                             <div className="absolute top-2 left-2 z-10 bg-yellow-500 font-black text-[8px] px-1.5 py-0.5 rounded text-black uppercase italic tracking-tighter border border-black/10">Part_0{i + 1}</div>
-                                            <img src={img} alt="Pictogram Part" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" loading="eager" />
+                                            <img src={img} alt="Pictogram Part" className="w-full h-full object-cover transition-all duration-700" loading="eager" />
                                         </motion.div>
                                         {i < challenges[currentIdx].images.length && (
                                             <div className="text-2xl font-light text-gray-800 opacity-50 px-1">
