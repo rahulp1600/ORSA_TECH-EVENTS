@@ -143,8 +143,6 @@ const ParticipantLogin = ({
                                 <option value="B.PHARM">B.PHARM</option>
                                 <option value="MBA">MBA</option>
                                 <option value="PHARM D">PHARM D</option>
-                                <option value="BCA">BCA</option>
-                                <option value="MCA">MCA</option>
                                 <option value="M.TECH">M.TECH</option>
                             </select>
                         </div>

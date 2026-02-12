@@ -115,7 +115,8 @@ const WordHunt = ({ onBack, onFinish }) => {
             newFound.add(solvedIdx);
 
             setFoundIndices(newFound);
-            setCompletedCells(prev => [...prev, ...selection.map(s => `${s.r}-${s.c}`)]);
+            const newCompleted = [...completedCells, ...selection.map(s => `${s.r}-${s.c}`)];
+            setCompletedCells(newCompleted);
             setScore(newFound.size);
 
             if (newFound.size === words.length) {
@@ -143,10 +144,10 @@ const WordHunt = ({ onBack, onFinish }) => {
             } else {
                 // Determine next clue index - find the FIRST word that is not found yet
                 let nextIdx = 0;
-                while (newFound.has(nextIdx) && nextIdx < words.length) {
+                while (nextIdx < words.length && newFound.has(nextIdx)) {
                     nextIdx++;
                 }
-                setCurrentIdx(Math.min(nextIdx, words.length - 1));
+                setCurrentIdx(nextIdx < words.length ? nextIdx : 0);
             }
         }
 
@@ -154,19 +155,31 @@ const WordHunt = ({ onBack, onFinish }) => {
         setStartCell(null);
         setSelectedCells([]);
         setDirection(null);
-    }, [words, foundIndices, startTime, formData, saveGameResult]);
+    }, [words, foundIndices, startTime, formData, completedCells]);
 
 
 
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
 
-        // If we already started a selection (Click-Move mode), this click submits it
-        if (startCell && !isDragging && selectedCells.length > 1) {
-            checkWord(selectedCells);
-            // Don't return here; allow the current click to start a new selection
+        // Toggle logic: If same cell clicked while in "Click-Move" mode, deselect
+        if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
+            setStartCell(null);
+            setSelectedCells([]);
+            setDirection(null);
+            return;
         }
 
+        // Second-click logic: If we have a start cell and this is a different cell
+        if (startCell && !isDragging && (startCell.r !== r || startCell.c !== c)) {
+            // handleMouseEnter already updated selectedCells
+            if (selectedCells.length >= 2) {
+                checkWord(selectedCells);
+                return;
+            }
+        }
+
+        // Start new selection (Drag or Click-to-Start)
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
@@ -178,7 +191,6 @@ const WordHunt = ({ onBack, onFinish }) => {
 
         const dr = Math.sign(r - startCell.r);
         const dc = Math.sign(c - startCell.c);
-
         const isStraight = r === startCell.r || c === startCell.c || Math.abs(r - startCell.r) === Math.abs(c - startCell.c);
 
         if (isStraight) {
@@ -197,7 +209,8 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
-        e.preventDefault(); // Prevent scrolling while playing
+        // Don't prevent default yet, we want to allow the "Click" logic to fire if possible
+        // but for dragging we need to lock down.
         setIsDragging(true);
         setStartCell({ r, c });
         setSelectedCells([{ r, c, char: grid[r][c] }]);
@@ -205,7 +218,7 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     const handleTouchMove = (e) => {
         if (!isDragging || !startCell) return;
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const touch = e.touches[0];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
         const cell = element?.closest('[data-pos]');
@@ -216,21 +229,20 @@ const WordHunt = ({ onBack, onFinish }) => {
     };
 
     useEffect(() => {
-        const handleGlobalMouseUp = () => {
+        const handleGlobalEnd = () => {
             if (isDragging) {
                 setIsDragging(false);
-                // If it was a meaningful drag (more than 1 cell), check it
                 if (selectedCells.length >= 2) {
                     checkWord(selectedCells);
                 }
-                // If length is 1, we leave startCell active for Click-Move-Click mode
+                // If length is 1, we keep startCell for Click-Move-Click mode
             }
         };
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        window.addEventListener('touchend', handleGlobalMouseUp);
+        window.addEventListener('mouseup', handleGlobalEnd);
+        window.addEventListener('touchend', handleGlobalEnd);
         return () => {
-            window.removeEventListener('mouseup', handleGlobalMouseUp);
-            window.removeEventListener('touchend', handleGlobalMouseUp);
+            window.removeEventListener('mouseup', handleGlobalEnd);
+            window.removeEventListener('touchend', handleGlobalEnd);
         };
     }, [isDragging, selectedCells, checkWord]);
 
