@@ -138,11 +138,17 @@ const CodeDebugging = ({ onBack, onFinish }) => {
     };
 
     // --- SECURITY FEATURES ---
+    // --- SECURITY FEATURES ---
     useEffect(() => {
         const handleVisibilityChange = () => {
-            if (document.hidden && phase === 'game') {
-                setMsg('TAB SWITCH DETECTED! THIS INCIDENT HAS BEEN LOGGED.');
-                setTimeout(() => setMsg(''), 5000);
+            if (document.visibilityState === 'hidden' && phase === 'game') {
+                setMsg('⚠️ WARNING: TAB SWITCH DETECTED! INCIDENT LOGGED.');
+            }
+        };
+
+        const handleBlur = () => {
+            if (phase === 'game') {
+                setMsg('⚠️ WARNING: FOCUS LOST! DO NOT MINIMIZE.');
             }
         };
 
@@ -150,18 +156,19 @@ const CodeDebugging = ({ onBack, onFinish }) => {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
                 e.preventDefault();
                 setMsg('INSPECT ELEMENT IS DISABLED!');
-                setTimeout(() => setMsg(''), 3000);
             }
         };
 
         const preventRightClick = (e) => e.preventDefault();
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("blur", handleBlur);
         window.addEventListener("keydown", handleKeyDown);
         window.addEventListener("contextmenu", preventRightClick);
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("blur", handleBlur);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("contextmenu", preventRightClick);
         };

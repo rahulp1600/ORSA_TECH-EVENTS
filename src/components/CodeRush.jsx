@@ -37,6 +37,42 @@ const CodeRush = ({ onBack, onFinish }) => {
 
     const [timer, setTimer] = useState(0);
 
+    // --- SECURITY FEATURES ---
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden' && phase === 'game') {
+                setMsg({ text: '⚠️ WARNING: TAB SWITCH DETECTED!', type: 'error' });
+            }
+        };
+
+        const handleBlur = () => {
+            if (phase === 'game') {
+                setMsg({ text: '⚠️ WARNING: FOCUS LOST!', type: 'error' });
+            }
+        };
+
+        const handleKeyDown = (e) => {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                setMsg({ text: 'INSPECT DISABLED', type: 'error' });
+            }
+        };
+
+        const preventRightClick = (e) => e.preventDefault();
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("blur", handleBlur);
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("contextmenu", preventRightClick);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("blur", handleBlur);
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("contextmenu", preventRightClick);
+        };
+    }, [phase]);
+
     useEffect(() => {
         let liveTimer;
         if (phase === 'game') {
