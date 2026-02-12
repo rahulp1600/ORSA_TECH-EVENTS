@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, RefreshCw, X, Search, FileDown, ShieldCheck, Gamepad2, Code2, Bug, Search as SearchIcon } from 'lucide-react';
-import { getLeaderboardData } from '../firebase';
+import { getLeaderboardData, subscribeToLeaderboard } from '../firebase';
 
 const AdminDashboard = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState('coderush');
@@ -18,15 +18,18 @@ const AdminDashboard = ({ onBack }) => {
         { id: 'wordhunt', label: 'Word Hunt', icon: SearchIcon, color: 'cyan' }
     ];
 
-    const loadData = async () => {
-        setLoading(true);
-        const results = await getLeaderboardData(activeTab);
-        setData(results);
-        setLoading(false);
-    };
-
     useEffect(() => {
-        loadData();
+        setLoading(true);
+        // Subscribe to real-time updates
+        const unsubscribe = subscribeToLeaderboard(activeTab, (results) => {
+            setData(results);
+            setLoading(false);
+        });
+
+        // Cleanup subscription on unmount or tab change
+        return () => {
+            unsubscribe();
+        };
     }, [activeTab]);
 
     const handleSort = (key) => {
@@ -124,9 +127,10 @@ const AdminDashboard = ({ onBack }) => {
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-purple-500 transition-colors"
                         />
                     </div>
-                    <button onClick={loadData} className="px-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-2">
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Refresh
-                    </button>
+                    <div className="px-6 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 text-gray-400">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-xs uppercase tracking-widest font-bold">Live Updates</span>
+                    </div>
                     <button onClick={exportToCSV} className="px-6 bg-green-600/20 border border-green-500/50 text-green-400 rounded-xl hover:bg-green-600/30 transition-colors flex items-center gap-2 ml-auto gaming-font uppercase text-xs font-bold tracking-widest">
                         <FileDown size={18} /> Export CSV
                     </button>
