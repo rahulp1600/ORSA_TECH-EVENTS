@@ -67,11 +67,11 @@ const Home = ({ onStart }) => {
                 className="absolute top-8 right-8 z-50 cursor-pointer group"
                 onClick={() => onStart('admin-login')}
             >
-                <div className="w-12 h-12 rounded-full border border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-300">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] transition-all duration-300 overflow-hidden bg-white/5 backdrop-blur-sm border-2 border-transparent group-hover:border-cyan-400">
                     <img
-                        src="/vite.svg"
+                        src="/orsa_logo.png"
                         alt="ORSA Admin"
-                        className="w-6 h-6 opacity-30 group-hover:opacity-100 transition-opacity duration-300"
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300 mix-blend-screen"
                     />
                 </div>
             </motion.div>
