@@ -32,9 +32,7 @@ const WordHunt = ({ onBack, onFinish }) => {
     const [timer, setTimer] = useState(0);
     const [endTime, setEndTime] = useState(0);
     const [score, setScore] = useState(0);
-    const [direction, setDirection] = useState(null);
-
-
+    // Removed startCell state, using direct selection array logic
 
     const generatePuzzle = (wordList) => {
         const size = 12; // Increased to 12x12 for better fitting of long technical words
@@ -85,161 +83,151 @@ const WordHunt = ({ onBack, onFinish }) => {
     };
 
     const [isDragging, setIsDragging] = useState(false);
-    const [startCell, setStartCell] = useState(null);
+    // Remove complex start/end cell logic, use simple array state 'selectedCells' directly.
+    // We also need 'direction' state to persist across non-drag interactions
+    const [direction, setDirection] = useState(null);
 
-    const checkWord = useCallback((selection) => {
-        if (!selection || selection.length < 2) {
-            setStartCell(null);
-            setSelectedCells([]);
-            setDirection(null);
-            setIsDragging(false);
-            return;
-        }
-
-        // Clean strings: Remove non-alphabetic chars and whitespace
-        const clean = (s) => s.toUpperCase().replace(/[^A-Z]/g, '').trim();
-        const selStr = clean(selection.map(s => s.char).join(''));
-
-        let solvedIdx = -1;
-
-        // Strict Logic: ONLY Check Current Clue
-        if (words[currentIdx]) {
-            const target = clean(words[currentIdx][0]);
-            // Snippet logic: strict matching, no reverse
-            if (selStr === target) {
-                solvedIdx = currentIdx;
-            }
-        }
-
-        if (solvedIdx !== -1) {
-            // WORD FOUND - Commit State
-            setFoundIndices(prev => {
-                const nextFound = new Set(prev);
-                nextFound.add(solvedIdx);
-
-                // Mark cells as green
-                const cellKeys = selection.map(s => `${s.r}-${s.c}`);
-                setCompletedCells(c => [...new Set([...c, ...cellKeys])]);
-                setScore(nextFound.size);
-
-                if (nextFound.size === words.length) {
-                    const finishTime = Date.now();
-                    setEndTime(finishTime);
-                    setPhase('result');
-                    const timeTaken = Math.floor((finishTime - startTime) / 1000);
-                    saveGameResult('wordhunt', {
-                        ...formData,
-                        score: nextFound.size,
-                        totalWords: words.length,
-                        timeTaken,
-                        cgpa: ((nextFound.size / words.length) * 10).toFixed(2)
-                    });
-                } else {
-                    // Advance Clue Sequentially
-                    setCurrentIdx(prevIdx => prevIdx + 1);
-                }
-                return nextFound;
-            });
-        }
-
-        // Cleanup selection regardless of result
-        setStartCell(null);
+    // Helper to clear selection
+    const clearSelection = useCallback(() => {
         setSelectedCells([]);
         setDirection(null);
         setIsDragging(false);
-    }, [words, currentIdx, startTime, formData, saveGameResult]);
+    }, []);
 
-    const handleMouseDown = (r, c) => {
-        if (phase !== 'game') return;
+    // Core Logic: Attempt to add cell (r, c) to selection
+    const attemptSelect = useCallback((r, c) => {
+        if (!words[currentIdx]) return;
+        const targetWord = words[currentIdx][0];
 
-        // Strict Logic: Can only start if char matches first letter of current word
-        const targetWord = words[currentIdx]?.[0];
-        if (!targetWord || grid[r][c] !== targetWord[0]) {
-            return;
-        }
+        setSelectedCells(prev => {
+            // 1. New Selection
+            if (prev.length === 0) {
+                // Allow ANY starting letter (per user request)
+                return [{ r, c, char: grid[r][c] }];
+            }
 
-        // If clicking the same cell that started the selection, toggle it off
-        if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
-            setStartCell(null);
-            setSelectedCells([]);
-            setDirection(null);
-            return;
-        }
+            const last = prev[prev.length - 1];
 
-        // Start fresh selection
-        setIsDragging(true);
-        setStartCell({ r, c });
-        setSelectedCells([{ r, c, char: grid[r][c] }]);
-        setDirection(null);
-    };
+            // Ignore if same as last cell (duplicate event)
+            if (last.r === r && last.c === c) return prev;
 
-    const handleMouseEnter = (r, c) => {
-        if (!startCell) return;
+            // 2. Check Adjacency & Direction
+            const dr = r - last.r;
+            const dc = c - last.c;
 
-        const dr = Math.sign(r - startCell.r);
-        const dc = Math.sign(c - startCell.c);
-        const isStraight = r === startCell.r || c === startCell.c || Math.abs(r - startCell.r) === Math.abs(c - startCell.c);
+            // Must be adjacent
+            if (Math.abs(dr) > 1 || Math.abs(dc) > 1) {
+                clearSelection();
+                return [];
+            }
 
-        if (isStraight) {
-            const newSel = [];
-            const steps = Math.max(Math.abs(r - startCell.r), Math.abs(c - startCell.c));
-            for (let i = 0; i <= steps; i++) {
-                const cr = startCell.r + dr * i;
-                const cc = startCell.c + dc * i;
-                if (cr >= 0 && cr < grid.length && cc >= 0 && cc < grid[0].length) {
-                    newSel.push({ r: cr, c: cc, char: grid[cr][cc] });
+            // Determine or Validate Direction
+            let newDir = direction;
+            if (prev.length === 1) {
+                newDir = { dr, dc };
+                setDirection(newDir);
+            } else {
+                // Must match existing direction
+                if (direction && (Math.abs(dr - direction.dr) > 0.1 || Math.abs(dc - direction.dc) > 0.1)) {
+                    clearSelection();
+                    return [];
                 }
             }
 
-            // Strict Logic: Validate Prefix
-            const selStr = newSel.map(s => s.char).join('');
-            const targetWord = words[currentIdx]?.[0];
+            // 3. Check Prefix Match (Strict against Target)
+            // Construct the candidate string to verify if it's a valid prefix of the target
+            const newChar = grid[r][c];
+            const currentStr = prev.map(s => s.char).join('');
+            const candidateStr = currentStr + newChar;
 
-            if (targetWord && targetWord.startsWith(selStr)) {
-                setSelectedCells(newSel);
-                setDirection({ dr, dc });
+            if (!targetWord.startsWith(candidateStr)) {
+                clearSelection();
+                return [];
             }
+
+            // 4. Valid Step - Add
+            const newSel = [...prev, { r, c, char: newChar }];
+
+            // 5. Check Completion
+            if (newSel.length === targetWord.length) {
+                // Word Completed!
+                const solvedIdx = currentIdx;
+
+                // Process win after small delay to show full selection
+                setTimeout(() => {
+                    setFoundIndices(oldFound => {
+                        const nextFound = new Set(oldFound);
+                        nextFound.add(solvedIdx);
+
+                        const cellKeys = newSel.map(s => `${s.r}-${s.c}`);
+                        setCompletedCells(completed => [...new Set([...completed, ...cellKeys])]);
+                        setScore(nextFound.size);
+
+                        if (nextFound.size === words.length) {
+                            const finishTime = Date.now();
+                            setEndTime(finishTime);
+                            setPhase('result');
+                            const timeTaken = Math.floor((finishTime - startTime) / 1000);
+                            saveGameResult('wordhunt', {
+                                ...formData,
+                                score: nextFound.size,
+                                totalWords: words.length,
+                                timeTaken,
+                                cgpa: ((nextFound.size / words.length) * 10).toFixed(2)
+                            });
+                        } else {
+                            setCurrentIdx(curr => curr + 1);
+                        }
+                        return nextFound;
+                    });
+
+                    // Clear selection
+                    setDirection(null);
+                    setSelectedCells([]);
+                }, 100);
+
+                return newSel;
+            }
+
+            return newSel;
+        });
+    }, [grid, words, currentIdx, direction, clearSelection, saveGameResult, formData, startTime]);
+
+    const handleMouseDown = (r, c) => {
+        if (phase !== 'game') return;
+        setIsDragging(true);
+        attemptSelect(r, c);
+    };
+
+    const handleMouseEnter = (r, c) => {
+        if (phase !== 'game') return;
+        if (isDragging) {
+            attemptSelect(r, c);
         }
     };
 
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
-
-        // Strict Logic: Check Start Char
-        const targetWord = words[currentIdx]?.[0];
-        if (!targetWord || grid[r][c] !== targetWord[0]) {
-            return;
-        }
-
-        if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
-            setStartCell(null);
-            setSelectedCells([]);
-            return;
-        }
         setIsDragging(true);
-        setStartCell({ r, c });
-        setSelectedCells([{ r, c, char: grid[r][c] }]);
+        attemptSelect(r, c);
     };
 
     const handleTouchMove = (e) => {
-        if (!isDragging || !startCell) return;
+        if (!isDragging) return;
         if (e.cancelable) e.preventDefault();
         const touch = e.touches[0];
         const el = document.elementFromPoint(touch.clientX, touch.clientY);
         const cell = el?.closest('[data-pos]');
         if (cell && cell.dataset.pos) {
             const [tr, tc] = cell.dataset.pos.split('-').map(Number);
-            handleMouseEnter(tr, tc);
+            attemptSelect(tr, tc);
         }
     };
 
     useEffect(() => {
         const handleEnd = () => {
-            // Attempt verify on release if we have a selection
-            if (isDragging && selectedCells.length > 0) {
-                checkWord(selectedCells);
-            }
             setIsDragging(false);
+            // DO NOT CLEAR SELECTION ON MOUSE UP
         };
         window.addEventListener('mouseup', handleEnd);
         window.addEventListener('touchend', handleEnd, { passive: false });
@@ -247,7 +235,7 @@ const WordHunt = ({ onBack, onFinish }) => {
             window.removeEventListener('mouseup', handleEnd);
             window.removeEventListener('touchend', handleEnd);
         };
-    }, [isDragging, selectedCells, checkWord]);
+    }, []);
 
     // --- SECURITY FEATURES ---
     useEffect(() => {
