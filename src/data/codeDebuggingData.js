@@ -110,6 +110,28 @@ export const DEBUG_CHALLENGES = {
                     return structCheck && semicolon;
                 },
                 expectedOutput: "10"
+            },
+            {
+                level: 9,
+                title: "Factorial Logic",
+                code: `#include <stdio.h>\n\nint main() {\n    int n = 5, fact = 1\n    for(int i=1; i<=n i++)\n        fact = fact * i;\n    printf("Factorial: %d", fact);\n    return 0\n}`,
+                validate: (code) => {
+                    const vars = (code.match(/;/g) || []).length >= 4;
+                    const forLoop = /for\s*\(\s*int\s+i\s*=\s*1\s*;\s*i\s*<=\s*n\s*;\s*i\+\+\s*\)/.test(code);
+                    return vars && forLoop;
+                },
+                expectedOutput: "Factorial: 120"
+            },
+            {
+                level: 10,
+                title: "Swap Numbers",
+                code: `#include <stdio.h>\n\nint main() {\n    int a=10, b=20, temp\n    printf("Before: %d %d\\n", a, b);\n    temp = a\n    a = b;\n    b = temp;\n    printf("After: %d %d", a, b);\n    return 0\n}`,
+                validate: (code) => {
+                    const vars = (code.match(/;/g) || []).length >= 7;
+                    const printf = /printf\s*\(\s*".*?"\s*,\s*a\s*,\s*b\s*\)\s*;/i.test(code);
+                    return vars && printf;
+                },
+                expectedOutput: "After: 20 10"
             }
         ],
         JAVA: [
@@ -210,6 +232,29 @@ export const DEBUG_CHALLENGES = {
                     return nameCheck && assignCheck && newCheck && printCheck;
                 },
                 expectedOutput: "ORSA"
+            },
+            {
+                level: 9,
+                title: "Factorial Calc",
+                code: `public class Main {\n    public static void main(String[] args) {\n        int n = 5\n        int fact = 1;\n        for(int i=1; i<=n i++) {\n            fact *= i;\n        }\n        System.out.printl(fact);\n    }\n}`,
+                validate: (code) => {
+                    const semi = (code.match(/;/g) || []).length >= 4;
+                    const loop = /for\s*\(\s*int\s+i\s*=\s*1\s*;\s*i\s*<=\s*n\s*;\s*i\+\+\s*\)/.test(code);
+                    const print = /System\.out\.println/.test(code);
+                    return semi && loop && print;
+                },
+                expectedOutput: "120"
+            },
+            {
+                level: 10,
+                title: "Swap Values",
+                code: `public class Main {\n    public static void main(String[] args) {\n        int a = 10, b = 20;\n        int temp  a;\n        a = b;\n        b = temp;\n        System.out.println(a + " " + b\n    }\n}`,
+                validate: (code) => {
+                    const temp = /int\s+temp\s*=\s*a\s*;/.test(code);
+                    const print = /System\.out\.println\(.*?\);/.test(code);
+                    return temp && print;
+                },
+                expectedOutput: "20 10"
             }
         ],
         PYTHON: [
@@ -308,6 +353,29 @@ export const DEBUG_CHALLENGES = {
                     return initCheck && nameCheck && printCheck && indents;
                 },
                 expectedOutput: "ORSA"
+            },
+            {
+                level: 9,
+                title: "Factorial Loop",
+                code: `int n = 5\nfact = 1\nfor i in range(1, n+1)\n    fact = fact * i\nprint fact`,
+                validate: (code) => {
+                    const nDecl = /n\s*=\s*5/.test(code) && !/int\s+n/.test(code);
+                    const rangeColon = /range\(.*?\):/.test(code);
+                    const printParen = /print\s*\(.*?\)/.test(code);
+                    return nDecl && rangeColon && printParen;
+                },
+                expectedOutput: "120"
+            },
+            {
+                level: 10,
+                title: "Swap Check",
+                code: `x = 10\ny = 20\nif x > 0\n    temp = x\n    x = y\n    y = temp\n    print(x, y`,
+                validate: (code) => {
+                    const ifColon = /if\s+x\s*>\s*0\s*:/.test(code);
+                    const printParen = /print\s*\(.*?\)/.test(code);
+                    return ifColon && printParen;
+                },
+                expectedOutput: "20 10"
             }
         ]
     },
@@ -406,6 +474,29 @@ export const DEBUG_CHALLENGES = {
                     return concatCheck && semicolons;
                 },
                 expectedOutput: "Concatenated"
+            },
+            {
+                level: 9,
+                title: "Array Search",
+                code: `#include <stdio.h>\n\nint main() {\n    int a[] = {1, 2, 3};\n    int k = 2;\n    for(int i=0; i<3 i++) {\n        if(a[i] == k)\n            printf("Found")\n    }\n    return 0;\n}`,
+                validate: (code) => {
+                    const forSemi = /for\s*\(.*?;.*?;.*?\)/.test(code);
+                    const printSemi = /printf\s*\(\s*".*?"\s*\)\s*;/i.test(code);
+                    return forSemi && printSemi;
+                },
+                expectedOutput: "Found"
+            },
+            {
+                level: 10,
+                title: "Matrix Logic",
+                code: `#include <stdio.h>\n\nint main() {\n    int m[2][2] = {{1, 2}, {3, 4}};\n    int r, c\n    for(r=0; r<2; r++)\n        for(c=0; c<2 c++)\n            printf("%d ", m[r][c]);\n    return 0\n}`,
+                validate: (code) => {
+                    const varsSemi = /int\s+r\s*,\s*c\s*;/i.test(code);
+                    const forOp = /c\s*\+\+\s*\)/.test(code);
+                    const returnSemi = /return\s+0\s*;/i.test(code);
+                    return varsSemi && forOp && returnSemi;
+                },
+                expectedOutput: "1 2 3 4 "
             }
         ],
         JAVA: [
@@ -512,6 +603,28 @@ export const DEBUG_CHALLENGES = {
                     return scCheck && nCheck && consumeCheck && choiceCheck && loopBraces && finalPrint;
                 },
                 expectedOutput: "Table printed"
+            },
+            {
+                level: 9,
+                title: "Object Array",
+                code: `class Item { int val; }\npublic class Main {\n    public static void main(String[] args) {\n        Item[] i = new Item[2];\n        i[0] = new Item()\n        i[0].val = 5;\n        System.out.println(i[0].val\n    }\n}`,
+                validate: (code) => {
+                    const newSemi = /new\s+Item\s*\(\s*\)\s*;/.test(code);
+                    const printParen = /println\s*\(.*?\)\s*;/.test(code);
+                    return newSemi && printParen;
+                },
+                expectedOutput: "5"
+            },
+            {
+                level: 10,
+                title: "Loop Logic",
+                code: `public class Main {\n    public static void main(String[] args) {\n        int i = 0\n        while i < 5 {\n            System.out.println(i);\n            i++;\n        }\n    }\n}`,
+                validate: (code) => {
+                    const iSemi = /int\s+i\s*=\s*0\s*;/.test(code);
+                    const whileParen = /while\s*\(.*?\)\s*\{/.test(code);
+                    return iSemi && whileParen;
+                },
+                expectedOutput: "0...4"
             }
         ],
         PYTHON: [
@@ -611,6 +724,30 @@ export const DEBUG_CHALLENGES = {
                     return inputBracket && rangeComma && colons && prints;
                 },
                 expectedOutput: "Table generated"
+            },
+            {
+                level: 9,
+                title: "Dict Iteration",
+                code: `d = {'a': 1, 'b': 2\nfor k, v in d.items()\n    print(k, v`,
+                validate: (code) => {
+                    const dictClose = /\}/.test(code);
+                    const forColon = /for\s+k\s*,\s*v\s+in\s+d\.items\s*\(\s*\)\s*:/.test(code);
+                    const printParen = /print\s*\(.*?\)/.test(code);
+                    return dictClose && forColon && printParen;
+                },
+                expectedOutput: "a 1"
+            },
+            {
+                level: 10,
+                title: "Nested Loops",
+                code: `adj = ["red", "big"]\nfruits = ["apple", "banana"]\nfor x in adj\n    for y in fruits\n        print(x, y`,
+                validate: (code) => {
+                    const forColon1 = /for\s+x\s+in\s+adj\s*:/.test(code);
+                    const forColon2 = /for\s+y\s+in\s+fruits\s*:/.test(code);
+                    const printParen = /print\s*\(.*?\)/.test(code);
+                    return forColon1 && forColon2 && printParen;
+                },
+                expectedOutput: "red apple..."
             }
         ],
     },
@@ -660,6 +797,69 @@ export const DEBUG_CHALLENGES = {
                     return arrayDecl && modCheck;
                 },
                 expectedOutput: "Mello"
+            },
+            {
+                level: 5,
+                title: "File Read",
+                code: `#include <stdio.h>\n\nint main() {\n    FILE *fp = fopen("t.txt", "r")\n    char ch;\n    while((ch = fgetc(fp)) != EOF)\n        printf("%c", ch);\n    fclose(fp\n    return 0;\n}`,
+                validate: (code) => {
+                    const openSemi = /fopen\s*\(\s*".*?"\s*,\s*".*?"\s*\)\s*;/i.test(code);
+                    const closeParen = /fclose\s*\(\s*fp\s*\)\s*;/i.test(code);
+                    return openSemi && closeParen;
+                },
+                expectedOutput: "Content"
+            },
+            {
+                level: 6,
+                title: "Macro Logic",
+                code: `#include <stdio.h>\n#define SQ(x) x*x\n\nint main() {\n    int a = 5;\n    printf("%d", SQ(a+1)\n    return 0;\n}`,
+                validate: (code) => {
+                    const printParen = /printf\s*\(.*?\)\s*;/i.test(code);
+                    return printParen;
+                },
+                expectedOutput: "36"
+            },
+            {
+                level: 7,
+                title: "Bitwise Swap",
+                code: `#include <stdio.h>\n\nint main() {\n    int x=10, y=5\n    x = x ^ y;\n    y = x ^ y;\n    x = x ^ y\n    printf("%d %d", x, y);\n    return 0;\n}`,
+                validate: (code) => {
+                    const declSemi = /int\s+x\s*=\s*10\s*,\s*y\s*=\s*5\s*;/i.test(code);
+                    const lastXorSemi = /x\s*=\s*x\s*\^\s*y\s*;/i.test(code);
+                    return declSemi && lastXorSemi;
+                },
+                expectedOutput: "5 10"
+            },
+            {
+                level: 8,
+                title: "Void Pointer",
+                code: `#include <stdio.h>\n\nint main() {\n    int a = 10;\n    void *ptr = &a;\n    printf("%d", *ptr);\n    return 0;\n}`,
+                validate: (code) => {
+                    const castCheck = /printf\s*\(.*?\*\(\s*int\s*\*\s*\)\s*ptr\s*\)\s*;/i.test(code);
+                    return castCheck;
+                },
+                expectedOutput: "10"
+            },
+            {
+                level: 9,
+                title: "Command Line",
+                code: `#include <stdio.h>\n\nint main(int argc, char argv[]) {\n    if(argc > 1)\n        printf("%s", argv[1]);\n    return 0;\n}`,
+                validate: (code) => {
+                    const ptrArg = /char\s*\*\s*argv\s*\[\s*\]/i.test(code);
+                    return ptrArg;
+                },
+                expectedOutput: "Arg printed"
+            },
+            {
+                level: 10,
+                title: "Union Usage",
+                code: `#include <stdio.h>\n\nunion Data {\n    int i;\n    float f;\n}\n\nint main() {\n    union Data d;\n    d.i = 10\n    printf("%d", d.i);\n    return 0;\n}`,
+                validate: (code) => {
+                    const unionSemi = /}\s*;/i.test(code);
+                    const assignSemi = /d\.i\s*=\s*10\s*;/i.test(code);
+                    return unionSemi && assignSemi;
+                },
+                expectedOutput: "10"
             }
         ],
         JAVA: [
@@ -773,6 +973,26 @@ export const DEBUG_CHALLENGES = {
                     return scCheck && glbCheck && opCheck && caseCheck && semicolons;
                 },
                 expectedOutput: "Result calculated"
+            },
+            {
+                level: 9,
+                title: "Interface Impl",
+                code: `interface I { void show(); }\nclass A implements I {\n    public void show() {\n        System.out.println("Show");\n    }\n}\npublic class Main {\n    public static void main(String[] args) {\n        I obj = new A()\n        obj.show();\n    }\n}`,
+                validate: (code) => {
+                    const newSemi = /new\s+A\s*\(\s*\)\s*;/i.test(code);
+                    return newSemi;
+                },
+                expectedOutput: "Show"
+            },
+            {
+                level: 10,
+                title: "Try Catch",
+                code: `public class Main {\n    public static void main(String[] args) {\n        try {\n            int a = 10/0;\n        } catch(ArithmeticException e) \n            System.out.println(e);\n        \n    }\n}`,
+                validate: (code) => {
+                    const catchBrace = /catch\s*\(.*?\)\s*\{/.test(code);
+                    return catchBrace;
+                },
+                expectedOutput: "Exception"
             }
         ],
         PYTHON: [
@@ -819,6 +1039,68 @@ export const DEBUG_CHALLENGES = {
                     return superCheck && classCheck;
                 },
                 expectedOutput: "Animal speaks\nDog barks"
+            },
+            {
+                level: 5,
+                title: "Lambda Func",
+                code: `x = lambda a : a + 10\nprint(x(5)`,
+                validate: (code) => {
+                    const printParen = /print\s*\(.*?\)/.test(code);
+                    return printParen;
+                },
+                expectedOutput: "15"
+            },
+            {
+                level: 6,
+                title: "Regex Match",
+                code: `import re\ntxt = "The rain"\nx = re.search("^The.*Spain$", txt\nif x\n    print("YES")\nelse\n    print("NO")`,
+                validate: (code) => {
+                    const searchParen = /re\.search\s*\(.*?\)/.test(code);
+                    const ifColon = /if\s+x\s*:/.test(code);
+                    const elseColon = /else\s*:/.test(code);
+                    return searchParen && ifColon && elseColon;
+                },
+                expectedOutput: "NO"
+            },
+            {
+                level: 7,
+                title: "Try Except",
+                code: `try:\n    print(x)\nexcept NameError\n    print("Variable x is not defined")\nexcept:\n    print("Something else went wrong")`,
+                validate: (code) => {
+                    const exceptColon = /except\s+NameError\s*:/.test(code);
+                    return exceptColon;
+                },
+                expectedOutput: "Variable x is not defined"
+            },
+            {
+                level: 8,
+                title: "File Write",
+                code: `f = open("demofile2.txt", "a")\nf.write("Now the file has more content!")\nf.close(\n\nf = open("demofile2.txt", "r")\nprint(f.read())`,
+                validate: (code) => {
+                    const closeParen = /f\.close\s*\(\s*\)/.test(code);
+                    return closeParen;
+                },
+                expectedOutput: "Content"
+            },
+            {
+                level: 9,
+                title: "Map Filter",
+                code: `nums = [1, 2, 3, 4]\ndoubled = map(lambda x x*2, nums)\nprint(list(doubled))`,
+                validate: (code) => {
+                    const lambdaColon = /lambda\s+x\s*:\s*x\s*\*\s*2/.test(code);
+                    return lambdaColon;
+                },
+                expectedOutput: "[2, 4, 6, 8]"
+            },
+            {
+                level: 10,
+                title: "Set Operations",
+                code: `thisset = {"apple", "banana", "cherry"}\nthisset.add "orange"\nprint(thisset)`,
+                validate: (code) => {
+                    const addParen = /thisset\.add\s*\(\s*"orange"\s*\)/.test(code);
+                    return addParen;
+                },
+                expectedOutput: "{'orange', ...}"
             }
         ]
     }

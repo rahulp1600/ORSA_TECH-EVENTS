@@ -137,6 +137,36 @@ const CodeDebugging = ({ onBack, onFinish }) => {
         }, 1500);
     };
 
+    // --- SECURITY FEATURES ---
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden && phase === 'game') {
+                setMsg('TAB SWITCH DETECTED! THIS INCIDENT HAS BEEN LOGGED.');
+                setTimeout(() => setMsg(''), 5000);
+            }
+        };
+
+        const handleKeyDown = (e) => {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                setMsg('INSPECT ELEMENT IS DISABLED!');
+                setTimeout(() => setMsg(''), 3000);
+            }
+        };
+
+        const preventRightClick = (e) => e.preventDefault();
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("contextmenu", preventRightClick);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("contextmenu", preventRightClick);
+        };
+    }, [phase]);
+
     useEffect(() => {
         let interval;
         if (isTimerRunning) {
