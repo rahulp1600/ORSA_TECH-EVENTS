@@ -99,27 +99,15 @@ const WordHunt = ({ onBack, onFinish }) => {
         // Clean strings: Remove non-alphabetic chars and whitespace
         const clean = (s) => s.toUpperCase().replace(/[^A-Z]/g, '').trim();
         const selStr = clean(selection.map(s => s.char).join(''));
-        const revStr = [...selStr].reverse().join('');
 
         let solvedIdx = -1;
 
-        // Priority 1: Check Current Clue
+        // Strict Logic: ONLY Check Current Clue
         if (words[currentIdx]) {
             const target = clean(words[currentIdx][0]);
-            if (selStr === target || revStr === target) {
+            // Snippet logic: strict matching, no reverse
+            if (selStr === target) {
                 solvedIdx = currentIdx;
-            }
-        }
-
-        // Priority 2: Full Bank Fallback
-        if (solvedIdx === -1) {
-            for (let i = 0; i < words.length; i++) {
-                if (foundIndices.has(i)) continue;
-                const target = clean(words[i][0]);
-                if (selStr === target || revStr === target) {
-                    solvedIdx = i;
-                    break;
-                }
             }
         }
 
@@ -147,10 +135,8 @@ const WordHunt = ({ onBack, onFinish }) => {
                         cgpa: ((nextFound.size / words.length) * 10).toFixed(2)
                     });
                 } else {
-                    // Advance Clue
-                    let n = 0;
-                    while (n < words.length && nextFound.has(n)) n++;
-                    setCurrentIdx(n < words.length ? n : 0);
+                    // Advance Clue Sequentially
+                    setCurrentIdx(prevIdx => prevIdx + 1);
                 }
                 return nextFound;
             });
@@ -161,10 +147,16 @@ const WordHunt = ({ onBack, onFinish }) => {
         setSelectedCells([]);
         setDirection(null);
         setIsDragging(false);
-    }, [words, currentIdx, foundIndices, startTime, formData, saveGameResult]);
+    }, [words, currentIdx, startTime, formData, saveGameResult]);
 
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
+
+        // Strict Logic: Can only start if char matches first letter of current word
+        const targetWord = words[currentIdx]?.[0];
+        if (!targetWord || grid[r][c] !== targetWord[0]) {
+            return;
+        }
 
         // If clicking the same cell that started the selection, toggle it off
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
@@ -198,14 +190,27 @@ const WordHunt = ({ onBack, onFinish }) => {
                     newSel.push({ r: cr, c: cc, char: grid[cr][cc] });
                 }
             }
-            setSelectedCells(newSel);
-            setDirection({ dr, dc });
+
+            // Strict Logic: Validate Prefix
+            const selStr = newSel.map(s => s.char).join('');
+            const targetWord = words[currentIdx]?.[0];
+
+            if (targetWord && targetWord.startsWith(selStr)) {
+                setSelectedCells(newSel);
+                setDirection({ dr, dc });
+            }
         }
     };
 
     const handleTouchStart = (e, r, c) => {
         if (phase !== 'game') return;
-        // Same logic as mouse down for unified behavior
+
+        // Strict Logic: Check Start Char
+        const targetWord = words[currentIdx]?.[0];
+        if (!targetWord || grid[r][c] !== targetWord[0]) {
+            return;
+        }
+
         if (startCell && startCell.r === r && startCell.c === c && !isDragging) {
             setStartCell(null);
             setSelectedCells([]);
@@ -230,15 +235,11 @@ const WordHunt = ({ onBack, onFinish }) => {
 
     useEffect(() => {
         const handleEnd = () => {
-            // If we have a selection longer than 1, attempt to verify it immediately on release
-            if (isDragging && selectedCells.length >= 2) {
+            // Attempt verify on release if we have a selection
+            if (isDragging && selectedCells.length > 0) {
                 checkWord(selectedCells);
             }
             setIsDragging(false);
-            // We DON'T clear startCell here IF length was 1, to allow 'Click-then-Move-then-Click' mode
-            if (!isDragging && selectedCells.length >= 2) {
-                checkWord(selectedCells);
-            }
         };
         window.addEventListener('mouseup', handleEnd);
         window.addEventListener('touchend', handleEnd, { passive: false });
