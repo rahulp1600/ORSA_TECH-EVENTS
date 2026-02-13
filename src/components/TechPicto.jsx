@@ -98,7 +98,12 @@ const TechPicto = ({ onBack, onFinish }) => {
 
     const handleAnswer = (e) => {
         if (e) e.preventDefault();
-        const correct = userInput.trim().toUpperCase() === challenges[currentIdx].target;
+
+        // Strip all spaces and convert to uppercase for robust matching
+        const cleanInput = userInput.replace(/\s+/g, '').toUpperCase();
+        const cleanTarget = challenges[currentIdx].target.replace(/\s+/g, '').toUpperCase();
+
+        const correct = cleanInput === cleanTarget;
 
         // Calculate new score locally to handle React state updates
         let points = 0;
