@@ -98,35 +98,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                         setOutput("");
                         setLogs(prev => [...prev, `System: Level ${nextLvl + 1} loaded.`]);
                     } else {
-                        const finishTime = Date.now();
-                        setEndTime(finishTime);
-                        setPhase('result');
-                        setIsTimerRunning(false);
-
-                        // Calculate final stats
-                        const timeTaken = Math.floor((finishTime - startTime) / 1000);
-                        const key = getBankKey();
-                        const totalLevels = CHALLENGES[key][selectedLang].length;
-                        const finalScore = score + 2; // Add the points from current successful level
-                        const maxScore = totalLevels * 2;
-                        const cgpa = maxScore > 0 ? ((finalScore / maxScore) * 10).toFixed(2) : "0.00";
-
-                        saveGameResult('codedebugging', {
-                            name: formData.name,
-                            rollNo: formData.rollNo,
-                            course: formData.course,
-                            year: formData.year,
-                            branch: formData.branch,
-                            isTeam: formData.isTeam,
-                            teammateRollNo: formData.teammateRollNo,
-                            language: selectedLang,
-                            difficulty: key,
-                            score: finalScore,
-                            totalLevels: totalLevels,
-                            timeTaken: timeTaken,
-                            cgpa: cgpa,
-                            accessCode: formData.accessCode
-                        });
+                        finishMission(score + 2);
                     }
                 }, 2000);
             } else {
@@ -136,6 +108,36 @@ const CodeDebugging = ({ onBack, onFinish }) => {
             }
         }, 1500);
     };
+
+    const finishMission = useCallback((finalScore = score) => {
+        const finishTime = Date.now();
+        setEndTime(finishTime);
+        setPhase('result');
+        setIsTimerRunning(false);
+
+        const timeTaken = Math.floor((finishTime - startTime) / 1000);
+        const key = getBankKey();
+        const totalLevels = CHALLENGES[key][selectedLang].length;
+        const maxScore = totalLevels * 2;
+        const cgpa = maxScore > 0 ? ((finalScore / maxScore) * 10).toFixed(2) : "0.00";
+
+        saveGameResult('codedebugging', {
+            name: formData.name,
+            rollNo: formData.rollNo,
+            course: formData.course,
+            year: formData.year,
+            branch: formData.branch,
+            isTeam: formData.isTeam,
+            teammateRollNo: formData.teammateRollNo,
+            language: selectedLang,
+            difficulty: key,
+            score: finalScore,
+            totalLevels: totalLevels,
+            timeTaken: timeTaken,
+            cgpa: cgpa,
+            accessCode: formData.accessCode
+        });
+    }, [formData, startTime, score, selectedLang, saveGameResult]);
 
     // --- SECURITY FEATURES ---
     // --- SECURITY FEATURES ---
@@ -177,10 +179,19 @@ const CodeDebugging = ({ onBack, onFinish }) => {
     useEffect(() => {
         let interval;
         if (isTimerRunning) {
-            interval = setInterval(() => setTimer(prev => prev + 1), 1000);
+            interval = setInterval(() => {
+                setTimer(prev => {
+                    const nextTime = prev + 1;
+                    if (nextTime >= 1800) { // 30 minutes
+                        clearInterval(interval);
+                        finishMission();
+                    }
+                    return nextTime;
+                });
+            }, 1000);
         }
         return () => clearInterval(interval);
-    }, [isTimerRunning]);
+    }, [isTimerRunning, finishMission]);
 
     const formatTime = (t) => {
         const m = Math.floor(t / 60);
@@ -284,9 +295,9 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                                         <div className="px-3 py-1.5 bg-black/60 rounded-xl border border-red-600/20 flex items-center gap-2.5 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                                             <Timer size={12} className="animate-pulse" />
                                             <div className="flex items-baseline gap-0.5 gaming-font">
-                                                <span className="text-lg font-black italic tracking-widest">{formatTime(timer).mins}</span>
+                                                <span className="text-lg font-black italic tracking-widest">{formatTime(Math.max(0, 1800 - timer)).mins}</span>
                                                 <span className="text-[8px] font-black opacity-40 uppercase">m</span>
-                                                <span className="text-lg font-black italic tracking-widest ml-0.5">{formatTime(timer).secs}</span>
+                                                <span className="text-lg font-black italic tracking-widest ml-0.5">{formatTime(Math.max(0, 1800 - timer)).secs}</span>
                                                 <span className="text-[8px] font-black opacity-40 uppercase">s</span>
                                             </div>
                                         </div>
