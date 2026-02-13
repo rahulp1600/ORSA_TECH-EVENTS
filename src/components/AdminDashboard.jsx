@@ -50,15 +50,28 @@ const AdminDashboard = ({ onBack }) => {
         }
     };
 
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const sortedData = [...data].filter(item =>
     (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a, b) => {
-        const valA = a[sortBy];
-        const valB = b[sortBy];
-
-        if (sortOrder === 'asc') return valA > valB ? 1 : -1;
-        return valA < valB ? 1 : -1;
+        if (sortBy === 'timeTaken') {
+            if (a.timeTaken !== b.timeTaken) {
+                return sortOrder === 'asc' ? a.timeTaken - b.timeTaken : b.timeTaken - a.timeTaken;
+            }
+            return b.cgpa - a.cgpa; // Higher CGPA wins tie-break
+        } else if (sortBy === 'cgpa') {
+            if (a.cgpa !== b.cgpa) {
+                return sortOrder === 'asc' ? a.cgpa - b.cgpa : b.cgpa - a.cgpa;
+            }
+            return a.timeTaken - b.timeTaken; // Lower time wins tie-break
+        }
+        return 0;
     });
 
     const exportToCSV = () => {
@@ -156,7 +169,7 @@ const AdminDashboard = ({ onBack }) => {
                                     <th className="p-4">Roll No</th>
                                     <th className="p-4">Branch/Year</th>
                                     <th className="p-4 cursor-pointer hover:text-white flex items-center gap-1" onClick={() => handleSort('timeTaken')}>
-                                        Time (s) {sortBy === 'timeTaken' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        Time (m:s) {sortBy === 'timeTaken' && (sortOrder === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th className="p-4 cursor-pointer hover:text-white flex items-center gap-1" onClick={() => handleSort('cgpa')}>
                                         CGPA {sortBy === 'cgpa' && (sortOrder === 'desc' ? '▼' : '▲')}
@@ -171,14 +184,24 @@ const AdminDashboard = ({ onBack }) => {
                                 ) : sortedData.length === 0 ? (
                                     <tr><td colSpan="8" className="p-8 text-center text-gray-500">No records found.</td></tr>
                                 ) : sortedData.map((row, idx) => (
-                                    <tr key={row.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="p-4 pl-6 font-mono text-gray-500 group-hover:text-white transition-colors border-r border-white/5 w-16 text-center">
-                                            {idx + 1}
+                                    <tr key={row.id} className={`hover:bg-white/5 transition-colors group ${idx < 3 ? 'bg-white/[0.02]' : ''}`}>
+                                        <td className="p-4 pl-6 font-mono text-gray-500 group-hover:text-white transition-colors border-r border-white/5 w-24 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                {idx === 0 && <Trophy size={16} className="text-yellow-400" />}
+                                                {idx === 1 && <Trophy size={16} className="text-gray-400" />}
+                                                {idx === 2 && <Trophy size={16} className="text-orange-400" />}
+                                                <span className={idx < 3 ? 'font-black text-white' : ''}>{idx + 1}</span>
+                                            </div>
                                         </td>
-                                        <td className="p-4 font-bold text-white capitalize">{row.name}</td>
+                                        <td className="p-4 font-bold text-white capitalize">
+                                            <div className="flex flex-col">
+                                                <span>{row.name}</span>
+                                                {idx < 3 && <span className="text-[10px] text-purple-400 uppercase tracking-tighter">Winner #{idx + 1}</span>}
+                                            </div>
+                                        </td>
                                         <td className="p-4 font-mono text-cyan-400 text-sm">{row.rollNo}</td>
                                         <td className="p-4 text-xs text-gray-400">{row.course} - {row.branch} ({row.year})</td>
-                                        <td className="p-4 font-mono text-yellow-400">{row.timeTaken}s</td>
+                                        <td className="p-4 font-mono text-yellow-400">{formatTime(row.timeTaken)}</td>
                                         <td className="p-4 font-bold">{row.cgpa}</td>
                                         <td className="p-4 text-xs text-gray-500">{row.teammateRollNo || '-'}</td>
                                         <td className="p-4 text-center">
