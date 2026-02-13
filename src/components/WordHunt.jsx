@@ -21,6 +21,7 @@ const WordHunt = ({ onBack, onFinish }) => {
         accessCode: ''
     });
     const [msg, setMsg] = useState('');
+    const [warningCount, setWarningCount] = useState(0);
 
     const [words, setWords] = useState([]);
     const [currentIdx, setCurrentIdx] = useState(0);
@@ -259,14 +260,22 @@ const WordHunt = ({ onBack, onFinish }) => {
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden' && phase === 'game') {
-                setMsg('⚠️ WARNING: TAB SWITCH DETECTED! SESSION FLAGGED.');
-                // Optional: You could decrement score or auto-submit here
+                setWarningCount(prev => {
+                    const newCount = prev + 1;
+                    if (newCount >= 2) {
+                        setMsg('🚫 2ND WARNING: SESSION TERMINATED DUE To TAB SWITCHING!');
+                        finishGame();
+                    } else {
+                        setMsg('⚠️ WARNING 1/2: TAB SWITCHING DETECTED! NEXT VIOLATION WILL TERMINATE SESSION.');
+                    }
+                    return newCount;
+                });
             }
         };
 
         const handleBlur = () => {
             if (phase === 'game') {
-                setMsg('⚠️ WARNING: FOCUS LOST! DO NOT MINIMIZE THE WINDOW.');
+                setMsg(prev => prev.includes('WARNING') ? prev : '⚠️ WARNING: FOCUS LOST! KEEP WINDOW FOCUSED.');
             }
         };
 
@@ -290,7 +299,7 @@ const WordHunt = ({ onBack, onFinish }) => {
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("contextmenu", preventRightClick);
         };
-    }, [phase]);
+    }, [phase, finishGame]);
 
     useEffect(() => {
         let interval;
