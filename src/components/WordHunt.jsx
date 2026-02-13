@@ -94,6 +94,23 @@ const WordHunt = ({ onBack, onFinish }) => {
         setIsDragging(false);
     }, []);
 
+    const finishGame = useCallback((finalScore = undefined) => {
+        const finishTime = Date.now();
+        setEndTime(finishTime);
+        setPhase('result');
+        const timeTaken = Math.floor((finishTime - startTime) / 1000);
+        const scoreToSave = finalScore !== undefined ? finalScore : foundIndices.size;
+
+        saveGameResult('wordhunt', {
+            ...formData,
+            score: scoreToSave,
+            totalWords: words.length,
+            timeTaken,
+            cgpa: ((scoreToSave / (words.length || 15)) * 10).toFixed(2)
+        });
+    }, [formData, startTime, words.length, foundIndices.size, saveGameResult]);
+
+
     // Core Logic: Attempt to add cell (r, c) to selection
     const attemptSelect = useCallback((r, c) => {
         if (!words[currentIdx]) return;
@@ -163,18 +180,8 @@ const WordHunt = ({ onBack, onFinish }) => {
                         setCompletedCells(completed => [...new Set([...completed, ...cellKeys])]);
                         setScore(nextFound.size);
 
-                        if (nextFound.size === words.length) {
-                            const finishTime = Date.now();
-                            setEndTime(finishTime);
-                            setPhase('result');
-                            const timeTaken = Math.floor((finishTime - startTime) / 1000);
-                            saveGameResult('wordhunt', {
-                                ...formData,
-                                score: nextFound.size,
-                                totalWords: words.length,
-                                timeTaken,
-                                cgpa: ((nextFound.size / words.length) * 10).toFixed(2)
-                            });
+                        if (currentIdx >= words.length - 1) {
+                            finishGame(nextFound.size);
                         } else {
                             setCurrentIdx(curr => curr + 1);
                         }
@@ -191,7 +198,17 @@ const WordHunt = ({ onBack, onFinish }) => {
 
             return newSel;
         });
-    }, [grid, words, currentIdx, direction, clearSelection, saveGameResult, formData, startTime]);
+    }, [grid, words, currentIdx, direction, clearSelection, saveGameResult, formData, startTime, finishGame]);
+
+    const handleSkip = () => {
+        if (currentIdx >= words.length - 1) {
+            finishGame();
+        } else {
+            setCurrentIdx(curr => curr + 1);
+            clearSelection();
+        }
+    };
+
 
     const handleMouseDown = (r, c) => {
         if (phase !== 'game') return;
@@ -278,10 +295,17 @@ const WordHunt = ({ onBack, onFinish }) => {
     useEffect(() => {
         let interval;
         if (phase === 'game' && startTime) {
-            interval = setInterval(() => setTimer(Math.floor((Date.now() - startTime) / 1000)), 1000);
+            interval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                setTimer(elapsed);
+                if (elapsed >= 2400) { // 40 minutes time limit
+                    clearInterval(interval);
+                    finishGame();
+                }
+            }, 1000);
         }
         return () => clearInterval(interval);
-    }, [phase, startTime]);
+    }, [phase, startTime, finishGame]);
 
     const formatTime = (t) => {
         const m = Math.floor(t / 60);
@@ -359,9 +383,9 @@ const WordHunt = ({ onBack, onFinish }) => {
                                 <div className="px-6 py-2 bg-black/60 rounded-xl border border-cyan-400/20 flex items-center gap-4 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)]">
                                     <Timer size={16} className="animate-pulse" />
                                     <div className="flex items-baseline gap-1 gaming-font">
-                                        <span className="text-2xl font-black italic tracking-widest">{formatTime(timer).mins}</span>
+                                        <span className="text-2xl font-black italic tracking-widest">{formatTime(Math.max(0, 2400 - timer)).mins}</span>
                                         <span className="text-xs font-black opacity-40 uppercase">m</span>
-                                        <span className="text-2xl font-black italic tracking-widest ml-1">{formatTime(timer).secs}</span>
+                                        <span className="text-2xl font-black italic tracking-widest ml-1">{formatTime(Math.max(0, 2400 - timer)).secs}</span>
                                         <span className="text-xs font-black opacity-40 uppercase">s</span>
                                     </div>
                                 </div>
@@ -401,9 +425,14 @@ const WordHunt = ({ onBack, onFinish }) => {
                                 <h3 className="text-cyan-400 gaming-font text-lg mb-4 flex items-center gap-2"><Trophy size={18} /> CLUE</h3>
                                 <div className="p-4 bg-black/40 border border-white/5 rounded-xl">
                                     <p className="text-gray-300 leading-relaxed italic">"{words[currentIdx]?.[1]}"</p>
-                                    <div className="mt-4 flex items-center gap-2">
-                                        <div className="flex gap-1">{[...Array(words[currentIdx]?.[0].length || 0)].map((_, i) => <div key={i} className="w-4 h-1 bg-white/20 rounded" />)}</div>
-                                        <span className="text-[10px] text-gray-500 gaming-font uppercase">{words[currentIdx]?.[0].length || 0} Letters</span>
+                                    <div className="mt-4 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex gap-1">{[...Array(words[currentIdx]?.[0].length || 0)].map((_, i) => <div key={i} className="w-4 h-1 bg-white/20 rounded" />)}</div>
+                                            <span className="text-[10px] text-gray-500 gaming-font uppercase">{words[currentIdx]?.[0].length || 0} Letters</span>
+                                        </div>
+                                        <button onClick={handleSkip} className="bg-cyan-400/10 hover:bg-cyan-400/20 text-cyan-400 px-3 py-1.5 rounded-lg text-[10px] font-bold gaming-font uppercase transition-colors flex items-center gap-1 border border-cyan-400/20">
+                                            SKIP <ChevronRight size={12} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
