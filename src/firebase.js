@@ -1,7 +1,26 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+
+
+/**
+ * Delete a game result from Firebase
+ * @param {string} eventName - 'techpicto', 'coderush', 'wordhunt', 'codedebugging'
+ * @param {string} docId - The ID of the document to delete
+ */
+export const deleteGameResult = async (eventName, docId) => {
+    try {
+        const collectionName = `${eventName}_results`;
+        await deleteDoc(doc(db, collectionName, docId));
+        console.log(`Result ${docId} deleted from ${collectionName}`);
+        return true;
+    } catch (e) {
+        console.error("Error deleting document: ", e);
+        return false;
+    }
+};
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {

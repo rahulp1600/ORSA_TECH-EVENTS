@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, RefreshCw, X, Search, FileDown, ShieldCheck, Gamepad2, Code2, Bug, Search as SearchIcon } from 'lucide-react';
-import { getLeaderboardData, subscribeToLeaderboard } from '../firebase';
+import { Trophy, RefreshCw, X, Search, FileDown, ShieldCheck, Gamepad2, Code2, Bug, Search as SearchIcon, Trash2 } from 'lucide-react';
+import { getLeaderboardData, subscribeToLeaderboard, deleteGameResult } from '../firebase';
 
 const AdminDashboard = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState('coderush');
@@ -31,6 +31,15 @@ const AdminDashboard = ({ onBack }) => {
             unsubscribe();
         };
     }, [activeTab]);
+
+    const handleDelete = async (id, name) => {
+        if (window.confirm(`Are you sure you want to delete the entry for ${name}?`)) {
+            const success = await deleteGameResult(activeTab, id);
+            if (!success) {
+                alert("Failed to delete the entry. Please try again.");
+            }
+        }
+    };
 
     const handleSort = (key) => {
         if (sortBy === key) {
@@ -153,6 +162,7 @@ const AdminDashboard = ({ onBack }) => {
                                         CGPA {sortBy === 'cgpa' && (sortOrder === 'desc' ? '▼' : '▲')}
                                     </th>
                                     <th className="p-4">Teammate</th>
+                                    <th className="p-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -171,6 +181,15 @@ const AdminDashboard = ({ onBack }) => {
                                         <td className="p-4 font-mono text-yellow-400">{row.timeTaken}s</td>
                                         <td className="p-4 font-bold">{row.cgpa}</td>
                                         <td className="p-4 text-xs text-gray-500">{row.teammateRollNo || '-'}</td>
+                                        <td className="p-4 text-center">
+                                            <button
+                                                onClick={() => handleDelete(row.id, row.name)}
+                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                title="Delete Entry"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
