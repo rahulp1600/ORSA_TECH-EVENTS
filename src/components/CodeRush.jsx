@@ -30,6 +30,7 @@ const CodeRush = ({ onBack, onFinish }) => {
     const [startTime, setStartTime] = useState(0);
     const [endTime, setEndTime] = useState(0);
     const [msg, setMsg] = useState({ text: '', type: '' });
+    const [warningCount, setWarningCount] = useState(0);
     const editorRef = useRef(null);
 
     const questions = questionBank[formData.language] || [];
@@ -41,13 +42,22 @@ const CodeRush = ({ onBack, onFinish }) => {
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden' && phase === 'game') {
-                setMsg({ text: '⚠️ WARNING: TAB SWITCH DETECTED!', type: 'error' });
+                setWarningCount(prev => {
+                    const newCount = prev + 1;
+                    if (newCount >= 2) {
+                        setMsg({ text: '🚫 SESSION TERMINATED: MULTIPLE TAB SWITCHES!', type: 'error' });
+                        finishGame(score);
+                    } else {
+                        setMsg({ text: '⚠️ WARNING 1/2: TAB SWITCH DETECTED! NEXT WILL TERMINATE.', type: 'error' });
+                    }
+                    return newCount;
+                });
             }
         };
 
         const handleBlur = () => {
             if (phase === 'game') {
-                setMsg({ text: '⚠️ WARNING: FOCUS LOST!', type: 'error' });
+                setMsg(prev => prev.text.includes('WARNING') ? prev : { text: '⚠️ WARNING: FOCUS LOST!', type: 'error' });
             }
         };
 
@@ -75,13 +85,18 @@ const CodeRush = ({ onBack, onFinish }) => {
 
     useEffect(() => {
         let liveTimer;
-        if (phase === 'game') {
+        if (phase === 'game' && startTime) {
             liveTimer = setInterval(() => {
-                setTimer(Math.floor((Date.now() - startTime) / 1000));
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                setTimer(elapsed);
+                if (elapsed >= 2400) { // 40 minutes
+                    clearInterval(liveTimer);
+                    finishGame(score);
+                }
             }, 1000);
         }
         return () => clearInterval(liveTimer);
-    }, [phase, startTime]);
+    }, [phase, startTime, score]);
 
     const finishGame = (finalScore) => {
         const finishTime = Date.now();
@@ -164,6 +179,24 @@ const CodeRush = ({ onBack, onFinish }) => {
         }
     };
 
+    const handleSkip = () => {
+        if (currentIdx < questions.length - 1) {
+            setCurrentIdx(prev => prev + 1);
+            setAttempts(0);
+            setUserCode('');
+            setMsg({ text: 'SKIPPED', type: 'error' });
+            setTimeout(() => setMsg({ text: '', type: '' }), 1000);
+        } else {
+            finishGame(score);
+        }
+    };
+
+    const handleManualSubmit = () => {
+        if (window.confirm("Are you sure you want to submit your assessment now?")) {
+            finishGame(score);
+        }
+    };
+
     const formatTime = (t) => {
         const m = Math.floor(t / 60);
         const s = t % 60;
@@ -243,9 +276,9 @@ const CodeRush = ({ onBack, onFinish }) => {
                                 <div className="px-6 py-2 bg-black/60 rounded-xl border border-emerald-600/20 flex items-center gap-4 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
                                     <Timer size={16} className="animate-pulse" />
                                     <div className="flex items-baseline gap-1 gaming-font">
-                                        <span className="text-2xl font-black italic tracking-widest">{formatTime(timer).mins}</span>
+                                        <span className="text-2xl font-black italic tracking-widest">{formatTime(Math.max(0, 2400 - timer)).mins}</span>
                                         <span className="text-xs font-black opacity-40 uppercase">m</span>
-                                        <span className="text-2xl font-black italic tracking-widest ml-1">{formatTime(timer).secs}</span>
+                                        <span className="text-2xl font-black italic tracking-widest ml-1">{formatTime(Math.max(0, 2400 - timer)).secs}</span>
                                         <span className="text-xs font-black opacity-40 uppercase">s</span>
                                     </div>
                                 </div>
@@ -305,14 +338,28 @@ const CodeRush = ({ onBack, onFinish }) => {
                                             {msg.text || (attempts > 0 ? `TRYING AGAIN [${attempts + 1}/3]` : 'READY FOR EXECUTION')}
                                         </p>
                                     </div>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={validateCode}
-                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-black gaming-font text-xs tracking-widest flex items-center gap-2 transition-colors italic"
-                                    >
-                                        EXECUTE <Play size={14} fill="currentColor" />
-                                    </motion.button>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={handleSkip}
+                                            className="px-4 py-2 rounded-xl border border-white/5 text-gray-500 hover:text-white hover:bg-white/5 text-[10px] gaming-font uppercase transition-all"
+                                        >
+                                            Skip Task
+                                        </button>
+                                        <button
+                                            onClick={handleManualSubmit}
+                                            className="px-4 py-2 rounded-xl border border-red-900/40 text-red-500 hover:bg-red-500/10 text-[10px] gaming-font uppercase transition-all"
+                                        >
+                                            End Mission
+                                        </button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={validateCode}
+                                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-black gaming-font text-xs tracking-widest flex items-center gap-2 transition-colors italic"
+                                        >
+                                            EXECUTE <Play size={14} fill="currentColor" />
+                                        </motion.button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

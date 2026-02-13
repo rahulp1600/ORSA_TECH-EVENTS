@@ -30,19 +30,29 @@ const TechPicto = ({ onBack, onFinish }) => {
     const [endTime, setEndTime] = useState(0);
     const [timer, setTimer] = useState(0);
     const [msg, setMsg] = useState('');
+    const [warningCount, setWarningCount] = useState(0);
 
 
     // --- SECURITY FEATURES ---
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden' && phase === 'game') {
-                setMsg('⚠️ WARNING: TAB SWITCH DETECTED!');
+                setWarningCount(prev => {
+                    const newCount = prev + 1;
+                    if (newCount >= 2) {
+                        setMsg('🚫 SESSION TERMINATED: MULTIPLE TAB SWITCHES!');
+                        finishPicto(score, correctCount);
+                    } else {
+                        setMsg('⚠️ WARNING 1/2: TAB SWITCHING DETECTED! NEXT WILL TERMINATE.');
+                    }
+                    return newCount;
+                });
             }
         };
 
         const handleBlur = () => {
             if (phase === 'game') {
-                setMsg('⚠️ WARNING: FOCUS LOST!');
+                setMsg(prev => prev.includes('WARNING') ? prev : '⚠️ WARNING: FOCUS LOST!');
             }
         };
 
@@ -70,13 +80,18 @@ const TechPicto = ({ onBack, onFinish }) => {
 
     useEffect(() => {
         let liveTimer;
-        if (phase === 'game') {
+        if (phase === 'game' && startTime) {
             liveTimer = setInterval(() => {
-                setTimer(Math.floor((Date.now() - startTime) / 1000));
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                setTimer(elapsed);
+                if (elapsed >= 2400) { // 40 minutes
+                    clearInterval(liveTimer);
+                    finishPicto(score, correctCount);
+                }
             }, 1000);
         }
         return () => clearInterval(liveTimer);
-    }, [phase, startTime]);
+    }, [phase, startTime, score, correctCount]);
 
 
 
@@ -119,32 +134,51 @@ const TechPicto = ({ onBack, onFinish }) => {
             setAttempts(2);
             setUserInput("");
         } else {
-            const finishTime = Date.now();
-            setEndTime(finishTime);
-            setPhase('result');
+            finishPicto(currentScore, currentCorrect);
+        }
+    };
 
-            // Calculate final stats
-            const timeTaken = Math.floor((finishTime - startTime) / 1000);
-            const scoreVal = currentScore !== undefined ? currentScore : score; // Use passed score if available
-            const correctVal = currentCorrect !== undefined ? currentCorrect : correctCount;
-            const maxScore = challenges.length * 2;
-            const cgpa = maxScore > 0 ? ((scoreVal / maxScore) * 10).toFixed(2) : "0.00";
+    const finishPicto = (finalScore = score, finalCorrect = correctCount) => {
+        const finishTime = Date.now();
+        setEndTime(finishTime);
+        setPhase('result');
 
-            saveGameResult('techpicto', {
-                name: formData.name,
-                rollNo: formData.rollNo,
-                course: formData.course,
-                year: formData.year,
-                branch: formData.branch,
-                isTeam: formData.isTeam,
-                teammateRollNo: formData.teammateRollNo,
-                score: scoreVal,
-                correctCount: correctVal,
-                totalQuestions: challenges.length,
-                timeTaken: timeTaken,
-                cgpa: cgpa,
-                accessCode: formData.accessCode
-            });
+        const timeTaken = Math.floor((finishTime - startTime) / 1000);
+        const maxScore = challenges.length * 2;
+        const cgpa = maxScore > 0 ? ((finalScore / maxScore) * 10).toFixed(2) : "0.00";
+
+        saveGameResult('techpicto', {
+            name: formData.name,
+            rollNo: formData.rollNo,
+            course: formData.course,
+            year: formData.year,
+            branch: formData.branch,
+            isTeam: formData.isTeam,
+            teammateRollNo: formData.teammateRollNo,
+            score: finalScore,
+            correctCount: finalCorrect,
+            totalQuestions: challenges.length,
+            timeTaken: timeTaken,
+            cgpa: cgpa,
+            accessCode: formData.accessCode
+        });
+    };
+
+    const handleSkip = () => {
+        if (currentIdx < challenges.length - 1) {
+            setCurrentIdx(prev => prev + 1);
+            setAttempts(2);
+            setUserInput("");
+            setMsg("CHALLENGE SKIPPED");
+            setTimeout(() => setMsg(''), 1000);
+        } else {
+            finishPicto();
+        }
+    };
+
+    const handleManualSubmit = () => {
+        if (window.confirm("Are you sure you want to submit your assessment now?")) {
+            finishPicto();
         }
     };
 
@@ -217,9 +251,9 @@ const TechPicto = ({ onBack, onFinish }) => {
                                     <div className="flex items-center gap-4 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                                         <Timer size={14} className="animate-pulse" />
                                         <div className="flex items-baseline gap-0.5 gaming-font">
-                                            <span className="text-xl font-black italic tracking-widest">{formatTime(timer).mins}</span>
+                                            <span className="text-xl font-black italic tracking-widest">{formatTime(Math.max(0, 2400 - timer)).mins}</span>
                                             <span className="text-[10px] font-black opacity-40 uppercase">m</span>
-                                            <span className="text-xl font-black italic tracking-widest ml-1">{formatTime(timer).secs}</span>
+                                            <span className="text-xl font-black italic tracking-widest ml-1">{formatTime(Math.max(0, 2400 - timer)).secs}</span>
                                             <span className="text-[10px] font-black opacity-40 uppercase">s</span>
                                         </div>
                                     </div>
@@ -281,9 +315,25 @@ const TechPicto = ({ onBack, onFinish }) => {
                                     <div className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-yellow-500/40 to-transparent" />
                                 </div>
 
-                                <div className="flex flex-col items-center gap-4 w-full">
+                                <div className="flex items-center gap-4 w-full">
                                     <div className="h-4 flex items-center justify-center">
                                         {msg && <p className="text-red-500 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse italic">{msg}</p>}
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={handleSkip}
+                                            className="px-6 py-3 rounded-xl border border-white/5 text-gray-500 hover:text-white hover:bg-white/5 text-[10px] gaming-font uppercase transition-all tracking-widest"
+                                        >
+                                            Skip Pattern
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleManualSubmit}
+                                            className="px-6 py-3 rounded-xl border border-red-900/40 text-red-500 hover:bg-red-500/10 text-[10px] gaming-font uppercase transition-all tracking-widest"
+                                        >
+                                            End Session
+                                        </button>
                                     </div>
                                 </div>
 
