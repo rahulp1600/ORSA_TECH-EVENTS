@@ -211,21 +211,23 @@ const TechPicto = ({ onBack, onFinish }) => {
                         themeColor="yellow"
                         onBack={onBack}
                         onLogin={() => {
-                            let bank = TECH_PICTO_SET_1; // Default to Set 1 (1st Year CSE + Non-CSE)
+                            let bank = [...TECH_PICTO_SET_1]; // Default to Set 1
 
                             if (formData.course === 'B.PHARM' || formData.course === 'PHARM D' || formData.course === 'M.PHARM') {
-                                bank = PHARMACY_PICTO_CHALLENGES;
+                                bank = [...PHARMACY_PICTO_CHALLENGES];
                             } else if (formData.course === 'MBA') {
-                                bank = MBA_PICTO_CHALLENGES;
+                                bank = [...MBA_PICTO_CHALLENGES];
                             } else if (formData.course === 'B.TECH' && formData.branch === 'CSE') {
-                                // 2nd, 3rd, 4th Year CSE -> Set 2
                                 const year = parseInt(formData.year);
                                 if (year > 1) {
-                                    bank = TECH_PICTO_SET_2;
+                                    bank = [...TECH_PICTO_SET_2];
                                 }
                             }
 
-                            setChallenges(bank);
+                            // Jumble Feature: Shuffle the bank
+                            const shuffledBank = bank.sort(() => Math.random() - 0.5);
+
+                            setChallenges(shuffledBank);
                             setStartTime(Date.now());
                             setPhase('game');
                         }}

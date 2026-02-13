@@ -23,6 +23,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
     const [selectedLang, setSelectedLang] = useState(null);
     const [currentLevel, setCurrentLevel] = useState(0);
     const [userCode, setUserCode] = useState("");
+    const [shuffledChallenges, setShuffledChallenges] = useState([]);
     const [timer, setTimer] = useState(0);
     const [startTime, setStartTime] = useState(0);
     const [endTime, setEndTime] = useState(0);
@@ -60,7 +61,12 @@ const CodeDebugging = ({ onBack, onFinish }) => {
     const startLoading = (lang) => {
         setSelectedLang(lang);
         const key = getBankKey();
-        const firstChallenge = CHALLENGES[key][lang][0];
+
+        // Shuffle and set challenges
+        const bank = [...CHALLENGES[key][lang]].sort(() => Math.random() - 0.5);
+        setShuffledChallenges(bank);
+
+        const firstChallenge = bank[0];
         setUserCode(firstChallenge.code);
         setPhase('loading');
         setTimeout(() => {
@@ -77,9 +83,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
         setOutput("");
 
         setTimeout(() => {
-            const key = getBankKey();
-            const currentChallenges = CHALLENGES[key][selectedLang];
-            const challenge = currentChallenges[currentLevel];
+            const challenge = shuffledChallenges[currentLevel];
             const normalized = normalizeCode(userCode, selectedLang);
             const isFixed = challenge.validate(normalized);
 
@@ -90,10 +94,10 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                 setOutput(challenge.expectedOutput);
 
                 setTimeout(() => {
-                    if (currentLevel < currentChallenges.length - 1) {
+                    if (currentLevel < shuffledChallenges.length - 1) {
                         const nextLvl = currentLevel + 1;
                         setCurrentLevel(nextLvl);
-                        setUserCode(currentChallenges[nextLvl].code);
+                        setUserCode(shuffledChallenges[nextLvl].code);
                         setCompileStatus('idle');
                         setOutput("");
                         setLogs(prev => [...prev, `System: Level ${nextLvl + 1} loaded.`]);
@@ -116,8 +120,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
         setIsTimerRunning(false);
 
         const timeTaken = Math.floor((finishTime - startTime) / 1000);
-        const key = getBankKey();
-        const totalLevels = CHALLENGES[key][selectedLang].length;
+        const totalLevels = shuffledChallenges.length;
         const maxScore = totalLevels * 2;
         const cgpa = maxScore > 0 ? ((finalScore / maxScore) * 10).toFixed(2) : "0.00";
 
@@ -200,8 +203,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
     };
 
     const getCGPA = () => {
-        const key = getBankKey();
-        const totalLevels = CHALLENGES[key][selectedLang].length;
+        const totalLevels = shuffledChallenges.length || 5;
         return ((score / (totalLevels * 2)) * 10).toFixed(2);
     };
 
@@ -277,7 +279,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                                 </div>
                                 <div className="flex items-center gap-4 min-w-0 flex-1 justify-end">
                                     <div className="flex gap-1.5 overflow-x-auto custom-scrollbar-hide max-w-[300px] py-1 px-2 mask-fade-edges">
-                                        {CHALLENGES[getBankKey()][selectedLang].map((_, i) => (
+                                        {shuffledChallenges.map((_, i) => (
                                             <div key={i} className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[9px] gaming-font transition-all ${i <= currentLevel ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'bg-white/5 text-gray-700'}`}>L{i + 1}</div>
                                         ))}
                                     </div>
@@ -416,7 +418,7 @@ const CodeDebugging = ({ onBack, onFinish }) => {
                             )}
                             <div className="flex justify-between items-center text-sm border-t border-white/5 pt-6">
                                 <span className="text-gray-600 uppercase tracking-widest font-black italic">POINTS_SECURED::</span>
-                                <span className="font-black text-white text-2xl italic">{score.toFixed(1)} <span className="text-gray-700 mx-2">/</span> {(CHALLENGES[getBankKey()][selectedLang].length * 2).toFixed(1)}</span>
+                                <span className="font-black text-white text-2xl italic">{score.toFixed(1)} <span className="text-gray-700 mx-2">/</span> {(shuffledChallenges.length * 2).toFixed(1)}</span>
                             </div>
                         </div>
                         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onFinish} className="w-full py-6 bg-red-600 text-white font-black gaming-font rounded-2xl uppercase tracking-[0.5em] italic shadow-2xl hover:bg-red-500 transition-all">Return to Command</motion.button>

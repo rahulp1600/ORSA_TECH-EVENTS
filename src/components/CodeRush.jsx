@@ -23,6 +23,7 @@ const CodeRush = ({ onBack, onFinish }) => {
         accessCode: ''
     });
     const [questionBank, setQuestionBank] = useState(CODE_RUSH_SET_1);
+    const [currentQuestions, setCurrentQuestions] = useState([]);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [score, setScore] = useState(0);
     const [attempts, setAttempts] = useState(0);
@@ -33,7 +34,7 @@ const CodeRush = ({ onBack, onFinish }) => {
     const [warningCount, setWarningCount] = useState(0);
     const editorRef = useRef(null);
 
-    const questions = questionBank[formData.language] || [];
+
 
 
     const [timer, setTimer] = useState(0);
@@ -116,7 +117,7 @@ const CodeRush = ({ onBack, onFinish }) => {
             teammateRollNo: formData.teammateRollNo,
             language: formData.language,
             score: finalScore,
-            totalQuestions: questions.length,
+            totalQuestions: currentQuestions.length,
             timeTaken: timeTaken,
             cgpa: cgpa,
             accessCode: formData.accessCode
@@ -130,12 +131,18 @@ const CodeRush = ({ onBack, onFinish }) => {
             setTimeout(() => setMsg({ text: '', type: '' }), 2000);
             return;
         }
+
+        // Shuffle currentQuestions
+        const qBank = formData.year === '1' ? CODE_RUSH_SET_1 : CODE_RUSH_SET_2;
+        const rawQuestions = qBank[formData.language] || [];
+        setCurrentQuestions([...rawQuestions].sort(() => Math.random() - 0.5));
+
         setStartTime(Date.now());
         setPhase('game');
     };
 
     const validateCode = () => {
-        const currentQ = questions[currentIdx];
+        const currentQ = currentQuestions[currentIdx];
         const normalized = normalizeCode(userCode, formData.language.toUpperCase());
         const isCorrect = currentQ.solution.test(normalized);
 
@@ -149,7 +156,7 @@ const CodeRush = ({ onBack, onFinish }) => {
             setMsg({ text: 'CORRECT EXECUTION!', type: 'success' });
 
             setTimeout(() => {
-                if (currentIdx < questions.length - 1) {
+                if (currentIdx < currentQuestions.length - 1) {
                     setCurrentIdx(prev => prev + 1);
                     setAttempts(0);
                     setUserCode('');
@@ -166,7 +173,7 @@ const CodeRush = ({ onBack, onFinish }) => {
             } else {
                 setMsg({ text: 'ATTEMPTS EXHAUSTED. SKIPPING...', type: 'error' });
                 setTimeout(() => {
-                    if (currentIdx < questions.length - 1) {
+                    if (currentIdx < currentQuestions.length - 1) {
                         setCurrentIdx(prev => prev + 1);
                         setAttempts(0);
                         setUserCode('');
@@ -180,7 +187,7 @@ const CodeRush = ({ onBack, onFinish }) => {
     };
 
     const handleSkip = () => {
-        if (currentIdx < questions.length - 1) {
+        if (currentIdx < currentQuestions.length - 1) {
             setCurrentIdx(prev => prev + 1);
             setAttempts(0);
             setUserCode('');
@@ -270,7 +277,7 @@ const CodeRush = ({ onBack, onFinish }) => {
                         <div className="lg:col-span-12 flex justify-between items-center bg-[#0a0a0f] p-6 rounded-3xl border border-white/5 backdrop-blur-xl">
                             <div>
                                 <h1 className="text-2xl font-black gaming-font italic text-emerald-600 tracking-tighter">TASK_{currentIdx + 1}</h1>
-                                <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">{questions[currentIdx].title} :: {formData.language}</p>
+                                <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">{currentQuestions[currentIdx].title} :: {formData.language}</p>
                             </div>
                             <div className="flex gap-8 items-center">
                                 <div className="px-6 py-2 bg-black/60 rounded-xl border border-emerald-600/20 flex items-center gap-4 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
@@ -299,7 +306,7 @@ const CodeRush = ({ onBack, onFinish }) => {
                                 <div className="absolute top-0 left-0 w-1 h-full bg-emerald-600" />
                                 <h3 className="text-emerald-500 font-black gaming-font text-xs uppercase tracking-widest mb-4">SPECIFICATIONS</h3>
                                 <p className="text-lg text-gray-200 leading-relaxed font-medium italic">
-                                    "{questions[currentIdx].prompt}"
+                                    "{currentQuestions[currentIdx].prompt}"
                                 </p>
                                 <div className="mt-8 pt-8 border-t border-white/5">
                                     <div className="flex items-center gap-3 text-gray-500 mb-4">
