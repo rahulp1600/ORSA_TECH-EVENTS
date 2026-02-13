@@ -87,7 +87,7 @@ export const TECH_PICTO_SET_1 = [
     {
         id: 15,
         title: "Challenge 15",
-        images: ["/photos/techpicto/road", "/photos/techpicto/map.jpg"],
+        images: ["/photos/techpicto/road.jpg", "/photos/techpicto/map.jpg"],
         target: "ROADMAP"
     }
 ];
@@ -128,7 +128,7 @@ export const TECH_PICTO_SET_2 = [
     {
         id: 6,
         title: "Challenge 6",
-        images: ["/photos/techpicto/computer.jpg", "/photos/techpicto/network"],
+        images: ["/photos/techpicto/computer.jpg", "/photos/techpicto/network.jpg"],
         target: "COMPUTER NETWORK"
     },
     {
@@ -140,13 +140,13 @@ export const TECH_PICTO_SET_2 = [
     {
         id: 8,
         title: "Challenge 8",
-        images: ["/photos/techpicto/dot", "/photos/techpicto/net.jpg"],
+        images: ["/photos/techpicto/dot.jpg", "/photos/techpicto/net.jpg"],
         target: "DOTNET"
     },
     {
         id: 9,
         title: "Challenge 9",
-        images: ["/photos/techpicto/pie", "/photos/techpicto/thorn.jpg"],
+        images: ["/photos/techpicto/pie.jpg", "/photos/techpicto/thorn.jpg"],
         target: "PYTHON"
     },
     {
@@ -182,7 +182,7 @@ export const TECH_PICTO_SET_2 = [
     {
         id: 15,
         title: "Challenge 15",
-        images: ["/photos/techpicto/tank.jpg", "/photos/techpicto/u"],
+        images: ["/photos/techpicto/tank.jpg", "/photos/techpicto/u.jpg"],
         target: "THANK YOU"
     }
 ];
@@ -304,7 +304,7 @@ export const MBA_PICTO_CHALLENGES = [
     {
         id: 4,
         title: "Challenge 4",
-        images: ["/photos/techpicto/road", "/photos/techpicto/map.jpg"],
+        images: ["/photos/techpicto/road.jpg", "/photos/techpicto/map.jpg"],
         target: "ROADMAP"
     },
     {
@@ -358,7 +358,7 @@ export const MBA_PICTO_CHALLENGES = [
     {
         id: 13,
         title: "Challenge 13",
-        images: ["/photos/techpicto/tank.jpg", "/photos/techpicto/u"],
+        images: ["/photos/techpicto/tank.jpg", "/photos/techpicto/u.jpg"],
         target: "THANK YOU"
     },
     {
