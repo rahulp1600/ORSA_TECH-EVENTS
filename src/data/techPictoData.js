@@ -88,7 +88,7 @@ export const TECH_PICTO_SET_1 = [
         id: 15,
         title: "Challenge 15",
         images: ["/photos/techpicto/road", "/photos/techpicto/map.jpg"],
-        target: "ROADMAP" 
+        target: "ROADMAP"
     }
 ];
 
@@ -98,8 +98,8 @@ export const TECH_PICTO_SET_2 = [
     {
         id: 1,
         title: "Challenge 1",
-        images: ["/photos/techpicto/fire.jpg", "/photos/techpicto/wall.jpg"],
-        target: "FIREWALL"
+        images: ["/photos/techpicto/java_coffee.jpg", "/photos/techpicto/script.jpg"],
+        target: "JAVASCRIPT"
     },
     {
         id: 2,
@@ -170,8 +170,8 @@ export const TECH_PICTO_SET_2 = [
     {
         id: 13,
         title: "Challenge 13",
-        images: ["/photos/techpicto/mother.jpg", "/photos/techpicto/board.jpg"],
-        target: "MOTHERBOARD"
+        images: ["/photos/techpicto/earth.jpg", "/photos/techpicto/net.jpg"],
+        target: "ETHERNET"
     },
     {
         id: 14,
